@@ -5,6 +5,7 @@ import { getRequests } from "../services/requests";
 import { isReturnableType } from "../services/itemTypes";
 import DueBadge from "../components/DueBadge.vue";
 
+/*  STATE  */
 const loading = ref(true);
 const searchText = ref("");
 const filterLocation = ref("");
@@ -41,8 +42,7 @@ async function load() {
       getRequests(),
     ]);
 
-    // Only Office Supplies / School Equipment items that are NOT consumables.
-    // (Uniforms are handled separately and are excluded here.)
+    /* Only non-consumable Office Supplies and School Equipment; uniforms are excluded. */
     const locatableItems = inventory.filter(
       (i) =>
         isReturnableType(i.item_type) &&

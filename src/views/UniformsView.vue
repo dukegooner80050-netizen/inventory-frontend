@@ -104,15 +104,39 @@ const loading = ref(false);
 
 /* FILTERED VARIANTS*/
 
-const filteredVariants = computed(() => {
-  if (isAllView.value) {
-    return uniformVariants.value;
-  }
-  return uniformVariants.value.filter((variant) => {
-    const departmentName = variant.department?.dept_name || "";
+/* SORT ORDER */
 
-    return departmentName === course.value;
-  });
+const SIZE_ORDER = ["xs", "small", "s", "medium", "m", "large", "l", "xl", "xxl", "2xl", "3xl"];
+
+function sizeRank(size) {
+  const text = String(size ?? "").trim().toLowerCase();
+  const number = parseFloat(text);
+  if (!Number.isNaN(number) && /^\d/.test(text)) {
+    return number;
+  }
+  const index = SIZE_ORDER.indexOf(text);
+  return index === -1 ? 1000 : 100 + index;
+}
+
+function compareVariants(a, b) {
+  return (
+    String(getTypeName(a)).localeCompare(String(getTypeName(b))) ||
+    String(getDepartmentName(a)).localeCompare(String(getDepartmentName(b))) ||
+    String(a.gender || "").localeCompare(String(b.gender || "")) ||
+    sizeRank(a.size) - sizeRank(b.size)
+  );
+}
+
+const filteredVariants = computed(() => {
+  const list = isAllView.value
+    ? uniformVariants.value
+    : uniformVariants.value.filter((variant) => {
+        const departmentName = variant.department?.dept_name || "";
+
+        return departmentName === course.value;
+      });
+
+  return [...list].sort(compareVariants);
 });
 
 /* LOAD DATA */
@@ -370,6 +394,34 @@ const addableDepartments = computed(() =>
     ? departments.value
     : departments.value.filter((d) => d.dept_name === course.value),
 );
+
+/* TYPES FOR THE CLICKED DEPARTMENT */
+
+// Shows the department's own types, plus brand-new types that no department
+// uses yet (so a type just created here can get its first variant).
+const departmentTypes = computed(() => {
+  const usedHere = new Set();
+  const usedAnywhere = new Set();
+
+  uniformVariants.value.forEach((variant) => {
+    const id = String(variant.idUniftype);
+    usedAnywhere.add(id);
+    if (getDepartmentName(variant) === course.value) usedHere.add(id);
+  });
+
+  const prefix = String(course.value).toLowerCase();
+
+  return uniformTypes.value
+    .filter((type) => {
+      const id = String(type.idUniftype);
+      return (
+        usedHere.has(id) ||
+        !usedAnywhere.has(id) ||
+        String(type.uniform_name).toLowerCase().startsWith(prefix)
+      );
+    })
+    .sort((a, b) => String(a.uniform_name).localeCompare(String(b.uniform_name)));
+});
 
 function openAddVariant() {
   variantTypeId.value = "";
@@ -1059,7 +1111,7 @@ const visibleTypes = computed(() => {
           <select class="form-select mb-3" v-model="variantTypeId" id="un-variant-type-id" name="variant-type-id">
             <option value="">Select uniform type</option>
 
-            <option v-for="type in uniformTypes" :key="type.idUniftype" :value="String(type.idUniftype)">
+            <option v-for="type in departmentTypes" :key="type.idUniftype" :value="String(type.idUniftype)">
               {{ type.uniform_name }}
             </option>
           </select>

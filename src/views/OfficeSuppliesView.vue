@@ -459,21 +459,17 @@ async function proceedAction() {
 
     <h3 class="mb-4">Office Supplies</h3>
     <div class="d-flex justify-content-between align-items-center mb-3">
-      <div class="d-flex gap-2">
+      <div class="nav nav-tabs" role="tablist">
         <button
-          class="btn"
-          :class="
-            activeTab === 'inventory' ? 'btn-primary' : 'btn-outline-primary'
-          "
+          class="nav-link"
+          :class="{ active: activeTab === 'inventory' }"
           @click="activeTab = 'inventory'"
         >
           Inventory
         </button>
         <button
-          class="btn"
-          :class="
-            activeTab === 'borrowed' ? 'btn-primary' : 'btn-outline-primary'
-          "
+          class="nav-link"
+          :class="{ active: activeTab === 'borrowed' }"
           @click="activeTab = 'borrowed'"
         >
           Borrowed Items

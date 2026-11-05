@@ -419,19 +419,19 @@ function formatDate(date) {
 
     <h3 class="mb-3">Inventory Management</h3>
 
-    <div class="d-flex gap-2 mb-3">
+    <div class="nav nav-tabs mb-3" role="tablist">
       <button
         type="button"
-        class="btn"
-        :class="activeTab === 'INVENTORY' ? 'btn-primary' : 'btn-outline-primary'"
+        class="nav-link"
+        :class="{ active: activeTab === 'INVENTORY' }"
         @click="activeTab = 'INVENTORY'"
       >
         Inventory
       </button>
       <button
         type="button"
-        class="btn"
-        :class="activeTab === 'LOCATOR' ? 'btn-primary' : 'btn-outline-primary'"
+        class="nav-link"
+        :class="{ active: activeTab === 'LOCATOR' }"
         @click="activeTab = 'LOCATOR'"
       >
         Item Locator

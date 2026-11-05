@@ -407,11 +407,11 @@ function statusBadgeClass(status) {
       </div>
     </div>
 
-    <div class="d-flex flex-wrap gap-2 mb-3">
+    <div class="nav nav-tabs mb-3" role="tablist">
       <button
         type="button"
-        class="btn"
-        :class="activeTab === 'pending' ? 'btn-primary' : 'btn-outline-primary'"
+        class="nav-link"
+        :class="{ active: activeTab === 'pending' }"
         @click="activeTab = 'pending'; expandedId = null"
       >
         Pending
@@ -419,8 +419,8 @@ function statusBadgeClass(status) {
       </button>
       <button
         type="button"
-        class="btn"
-        :class="activeTab === 'release' ? 'btn-primary' : 'btn-outline-primary'"
+        class="nav-link"
+        :class="{ active: activeTab === 'release' }"
         @click="activeTab = 'release'; expandedId = null"
       >
         For Release
@@ -428,8 +428,8 @@ function statusBadgeClass(status) {
       </button>
       <button
         type="button"
-        class="btn"
-        :class="activeTab === 'all' ? 'btn-primary' : 'btn-outline-primary'"
+        class="nav-link"
+        :class="{ active: activeTab === 'all' }"
         @click="activeTab = 'all'; expandedId = null"
       >
         All

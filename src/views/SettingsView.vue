@@ -620,11 +620,11 @@ onMounted(async () => {
     </p>
 
     <!-- TABS (General is always available; the other two are admin-only) -->
-    <div class="d-flex gap-2 mb-3">
+    <div class="nav nav-tabs mb-3" role="tablist">
       <button
         type="button"
-        class="btn"
-        :class="activeTab === 'GENERAL' ? 'btn-primary' : 'btn-outline-primary'"
+        class="nav-link"
+        :class="{ active: activeTab === 'GENERAL' }"
         @click="activeTab = 'GENERAL'"
       >
         General
@@ -633,8 +633,8 @@ onMounted(async () => {
       <button
         v-if="canEditLimit"
         type="button"
-        class="btn d-flex align-items-center gap-2"
-        :class="activeTab === 'ACCOUNT_REQUESTS' ? 'btn-primary' : 'btn-outline-primary'"
+        class="nav-link d-flex align-items-center gap-2"
+        :class="{ active: activeTab === 'ACCOUNT_REQUESTS' }"
         @click="activeTab = 'ACCOUNT_REQUESTS'"
       >
         Account Requests
@@ -644,8 +644,8 @@ onMounted(async () => {
       <button
         v-if="canEditLimit"
         type="button"
-        class="btn"
-        :class="activeTab === 'ACCOUNT_MANAGEMENT' ? 'btn-primary' : 'btn-outline-primary'"
+        class="nav-link"
+        :class="{ active: activeTab === 'ACCOUNT_MANAGEMENT' }"
         @click="activeTab = 'ACCOUNT_MANAGEMENT'"
       >
         Account Management

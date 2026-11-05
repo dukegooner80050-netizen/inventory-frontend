@@ -401,21 +401,17 @@ async function confirmModal() {
   <!-- ACTION BAR -->
   <div class="d-flex justify-content-between align-items-center mb-3">
     <!-- LEFT -->
-    <div class="d-flex gap-2">
+    <div class="nav nav-tabs" role="tablist">
       <button
-        class="btn"
-        :class="
-          activeTab === 'inventory' ? 'btn-primary' : 'btn-outline-primary'
-        "
+        class="nav-link"
+        :class="{ active: activeTab === 'inventory' }"
         @click="activeTab = 'inventory'"
       >
         Equipment Inventory
       </button>
       <button
-        class="btn"
-        :class="
-          activeTab === 'borrowed' ? 'btn-primary' : 'btn-outline-primary'
-        "
+        class="nav-link"
+        :class="{ active: activeTab === 'borrowed' }"
         @click="activeTab = 'borrowed'"
       >
         Borrowed Equipment

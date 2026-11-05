@@ -193,23 +193,22 @@ function toggleExpand(key) {
     <div class="card shadow-sm mb-4">
       <div class="card-body">
         <div class="d-flex flex-wrap gap-3 align-items-end justify-content-between">
-          <div class="d-flex gap-2">
+          <div class="nav nav-tabs" role="tablist">
             <button
-              class="btn"
-              :class="viewMode === 'item' ? 'btn-primary' : 'btn-outline-primary'"
+              class="nav-link"
+              :class="{ active: viewMode === 'item' }"
               @click="viewMode = 'item'"
             >
               By Item
             </button>
             <button
-              class="btn"
-              :class="viewMode === 'records' ? 'btn-primary' : 'btn-outline-primary'"
+              class="nav-link"
+              :class="{ active: viewMode === 'records' }"
               @click="viewMode = 'records'"
             >
               All Records
             </button>
-            <button v-if="isInventoryManagement" class="btn" :class=" viewMode === 'requester'
-             ? 'btn-primary' : 'btn-outline-primary'" @click="viewMode = 'requester'">
+            <button v-if="isInventoryManagement" class="nav-link" :class="{ active: viewMode === 'requester' }" @click="viewMode = 'requester'">
               By Requester
             </button>
           </div>

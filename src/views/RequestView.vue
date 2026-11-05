@@ -1033,18 +1033,18 @@ watch(activeTab, async () => {
 <template>
   <div class="container-fluid">
     <!-- Tabs -->
-    <div class="d-flex gap-2 mb-3">
+    <div class="nav nav-tabs mb-3" role="tablist">
       <button
-        class="btn"
-        :class="activeTab === 'create' ? 'btn-primary' : 'btn-outline-primary'"
+        class="nav-link"
+        :class="{ active: activeTab === 'create' }"
         @click="activeTab = 'create'"
       >
         Create Request
       </button>
 
       <button
-        class="btn"
-        :class="activeTab === 'mine' ? 'btn-primary' : 'btn-outline-primary'"
+        class="nav-link"
+        :class="{ active: activeTab === 'mine' }"
         @click="
           loadMyRequests();
           activeTab = 'mine';
@@ -1054,8 +1054,8 @@ watch(activeTab, async () => {
       </button>
       <button
         v-if="canRequestUniforms"
-        class="btn"
-        :class="activeTab === 'reservations' ? 'btn-primary' : 'btn-outline-primary'"
+        class="nav-link"
+        :class="{ active: activeTab === 'reservations' }"
         @click="loadReservations(); activeTab = 'reservations'"
       >
         Uniform Reservations

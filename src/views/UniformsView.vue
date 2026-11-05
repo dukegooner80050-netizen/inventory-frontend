@@ -1232,11 +1232,11 @@ const visibleTypes = computed(() => {
 
         <!-- TABS -->
         <div class="px-3 pt-3">
-          <div class="btn-group w-100" role="tablist" aria-label="What to edit">
+          <div class="nav nav-tabs w-100" role="tablist" aria-label="What to edit">
             <button
               type="button"
-              class="btn"
-              :class="editTab === 'variant' ? 'btn-primary' : 'btn-outline-primary'"
+              class="nav-link flex-fill"
+              :class="{ active: editTab === 'variant' }"
               role="tab"
               :aria-selected="editTab === 'variant'"
               @click="switchEditTab('variant')"
@@ -1245,8 +1245,8 @@ const visibleTypes = computed(() => {
             </button>
             <button
               type="button"
-              class="btn"
-              :class="editTab === 'type' ? 'btn-primary' : 'btn-outline-primary'"
+              class="nav-link flex-fill"
+              :class="{ active: editTab === 'type' }"
               role="tab"
               :aria-selected="editTab === 'type'"
               :disabled="!editingType"

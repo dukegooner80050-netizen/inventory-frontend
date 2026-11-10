@@ -65,7 +65,11 @@ async function endSession() {
   } catch {
     /* the login page just won't show the note */
   }
-  await logout();
+  try {
+    await logout();
+  } catch {
+    /* the local sign-out already happened; still go to the login page */
+  }
   router.push("/login");
 }
 

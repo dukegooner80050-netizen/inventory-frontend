@@ -6,8 +6,8 @@ import { logout } from "../services/auth";
 
 /*  SETTINGS  */
 
-const AMO_LIMIT_MIN = 2;
-const OTHER_LIMIT_MIN = 60;
+const AMO_LIMIT_MIN = 10;
+const OTHER_LIMIT_MIN = 20;
 const WARN_SECONDS = 60;
 const CHECK_MS = 5000;
 const SAVE_EVERY_MS = 5000;

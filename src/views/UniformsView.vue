@@ -104,7 +104,9 @@ const loading = ref(false);
 
 /* FILTERED VARIANTS*/
 
-const filteredVariants = computed(() => {
+const searchQuery = ref("");
+
+const departmentVariants = computed(() => {
   if (isAllView.value) {
     return uniformVariants.value;
   }
@@ -112,6 +114,30 @@ const filteredVariants = computed(() => {
     const departmentName = variant.department?.dept_name || "";
 
     return departmentName === course.value;
+  });
+});
+
+// Search: every typed word must match name, description, department,
+// gender, size, price, status or quantity of the row.
+const filteredVariants = computed(() => {
+  const words = searchQuery.value.toLowerCase().split(/\s+/).filter(Boolean);
+  if (!words.length) {
+    return departmentVariants.value;
+  }
+  return departmentVariants.value.filter((variant) => {
+    const text = [
+      getTypeName(variant),
+      variant.type?.description,
+      getDepartmentName(variant),
+      variant.gender || "Unisex",
+      variant.size,
+      Number(variant.price || 0).toFixed(2),
+      getStatus(variant.quantity),
+      variant.quantity,
+    ]
+      .join(" ")
+      .toLowerCase();
+    return words.every((w) => text.includes(w));
   });
 });
 
@@ -810,6 +836,23 @@ const visibleTypes = computed(() => {
       </div>
 
       <div class="d-flex gap-2 flex-wrap">
+        <div class="input-group uniform-search">
+          <input
+            v-model="searchQuery"
+            type="search"
+            class="form-control"
+            placeholder="Search uniform, size, gender, status..."
+            aria-label="Search uniforms"
+          />
+          <button
+            v-if="searchQuery"
+            class="btn btn-outline-secondary"
+            type="button"
+            @click="searchQuery = ''"
+          >
+            Clear
+          </button>
+        </div>
         <button class="btn btn-primary text-white" @click="courseModalOpen = true">
           Manage Courses
         </button>
@@ -922,8 +965,8 @@ const visibleTypes = computed(() => {
             <!-- EMPTY -->
 
             <tr v-if="!filteredVariants.length">
-              <td colspan="7" class="text-center text-muted py-4">
-                No uniforms found.
+              <td colspan="8" class="text-center text-muted py-4">
+                {{ searchQuery ? "No uniforms match your search." : "No uniforms found." }}
               </td>
             </tr>
           </tbody>
@@ -1534,6 +1577,10 @@ const visibleTypes = computed(() => {
 </template>
 
 <style scoped>
+.uniform-search {
+  width: 280px;
+  max-width: 100%;
+}
 .table-scroll {
   max-height: 520px;
   overflow-y: auto;

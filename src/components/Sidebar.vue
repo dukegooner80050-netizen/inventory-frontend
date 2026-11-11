@@ -20,16 +20,21 @@ async function loadCourses() {
   } catch { /* keep the current list */ }
 }
 
-/* Sidebar groups (AMO only). Stock and Reports can be collapsed; the choice is remembered per browser. */
-const GROUPS_KEY = "cims:sidebarGroups"
-const openGroups = ref({ stock: true, reports: false })
-try {
-  const saved = JSON.parse(localStorage.getItem(GROUPS_KEY) || "null")
-  if (saved && typeof saved === "object") openGroups.value = { ...openGroups.value, ...saved }
-} catch { /* storage unavailable: keep defaults */ }
+/* Sidebar groups (AMO only). All start collapsed; the group that holds the current page opens itself. */
+const openGroups = ref({ work: false, stock: false, reports: false, account: false })
 const toggleGroup = (name) => {
   openGroups.value = { ...openGroups.value, [name]: !openGroups.value[name] }
-  try { localStorage.setItem(GROUPS_KEY, JSON.stringify(openGroups.value)) } catch { /* ignore */ }
+}
+const GROUP_OF = {
+  "/pending-requests": "work", "/pending-inspection": "work", "/equipment-reports": "work",
+  "/inventory": "stock", "/office-supplies": "stock", "/school-equipment": "stock", "/uniforms": "stock",
+  "/equipment-distribution": "stock", "/disposal-records": "stock",
+  "/consumption-report": "reports", "/reports": "reports", "/logs": "reports",
+  "/request": "account", "/settings": "account",
+}
+function openGroupOfPage() {
+  const g = GROUP_OF[route.path]
+  if (g && !openGroups.value[g]) openGroups.value = { ...openGroups.value, [g]: true }
 }
 
 const toggleUniforms = () => {
@@ -100,6 +105,7 @@ const refreshSoon = throttled(refreshCounts, 3000)
 let stopPolling = null
 
 onMounted(() => {
+  openGroupOfPage()
   loadCourses()
   window.addEventListener('cims:courses-changed', loadCourses)
   refreshCounts()
@@ -119,6 +125,9 @@ onBeforeUnmount(() => {
 })
 
 watch(() => route.fullPath, refreshSoon)
+watch(() => route.path, openGroupOfPage)
+
+const workBadge = computed(() => pendingCount.value + pendingInspectionCount.value + equipmentReportCount.value)
 </script>
 
 <template>
@@ -181,7 +190,12 @@ watch(() => route.fullPath, refreshSoon)
     </RouterLink>
 
     <!-- WORK: daily tasks (AMO) -->
-    <div v-if="isAdmin && !props.collapsed" class="group-head group-static">Work</div>
+    <button v-if="isAdmin && !props.collapsed" type="button" class="group-head" @click="toggleGroup('work')">
+      <span>Work</span>
+      <span v-if="!openGroups.work && workBadge > 0" class="badge bg-danger ms-auto me-2">{{ workBadge }}</span>
+      <span class="group-arrow" :style="{ transform: openGroups.work ? 'rotate(180deg)' : 'rotate(0deg)' }">▼</span>
+    </button>
+    <div v-show="!isAdmin || props.collapsed || openGroups.work">
 <RouterLink
       v-if="isAdmin"
       class="sidebar-link d-flex justify-content-between align-items-center"
@@ -225,6 +239,7 @@ watch(() => route.fullPath, refreshSoon)
         class="badge bg-danger"
       >{{ equipmentReportCount }}</span>
     </RouterLink>
+    </div>
 
     <!-- STOCK (AMO, collapsible) -->
     <button v-if="isAdmin && !props.collapsed" type="button" class="group-head" @click="toggleGroup('stock')">
@@ -319,7 +334,12 @@ watch(() => route.fullPath, refreshSoon)
     </div>
 
     <!-- ACCOUNT -->
-    <div v-if="isAdmin && !props.collapsed" class="group-head group-static">Account</div>
+    <button v-if="isAdmin && !props.collapsed" type="button" class="group-head" @click="toggleGroup('account')">
+      <span>Account</span>
+      <span v-if="!openGroups.account && accountRequestCount > 0" class="badge bg-danger ms-auto me-2">{{ accountRequestCount }}</span>
+      <span class="group-arrow" :style="{ transform: openGroups.account ? 'rotate(180deg)' : 'rotate(0deg)' }">▼</span>
+    </button>
+    <div v-show="!isAdmin || props.collapsed || openGroups.account">
 <RouterLink class="sidebar-link" :class="{ active: active('/request') }" to="/request">
       <span class="icon">📝</span>
       <span class="label" v-if="!props.collapsed">Request Item</span>
@@ -340,6 +360,7 @@ watch(() => route.fullPath, refreshSoon)
         class="badge bg-danger"
       >{{ accountRequestCount }}</span>
     </RouterLink>
+    </div>
   </aside>
 </template>
 

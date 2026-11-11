@@ -20,6 +20,18 @@ async function loadCourses() {
   } catch { /* keep the current list */ }
 }
 
+/* Sidebar groups (AMO only). Stock and Reports can be collapsed; the choice is remembered per browser. */
+const GROUPS_KEY = "cims:sidebarGroups"
+const openGroups = ref({ stock: true, reports: false })
+try {
+  const saved = JSON.parse(localStorage.getItem(GROUPS_KEY) || "null")
+  if (saved && typeof saved === "object") openGroups.value = { ...openGroups.value, ...saved }
+} catch { /* storage unavailable: keep defaults */ }
+const toggleGroup = (name) => {
+  openGroups.value = { ...openGroups.value, [name]: !openGroups.value[name] }
+  try { localStorage.setItem(GROUPS_KEY, JSON.stringify(openGroups.value)) } catch { /* ignore */ }
+}
+
 const toggleUniforms = () => {
   if (!props.collapsed) {
     showUniforms.value = !showUniforms.value
@@ -151,19 +163,88 @@ watch(() => route.fullPath, refreshSoon)
     <hr v-if="!props.collapsed" class="text-light" />
 
     <!-- Links -->
-    <RouterLink class="sidebar-link" :class="{ active: active('/dashboard') }" to="/dashboard">
+<RouterLink class="sidebar-link" :class="{ active: active('/dashboard') }" to="/dashboard">
       <span class="icon">🏠</span>
       <span class="label" v-if="!props.collapsed">Dashboard</span>
     </RouterLink>
 
-    <RouterLink v-if="isAdmin" class="sidebar-link" :class="{ active: active('/inventory') }" to="/inventory">
+<RouterLink
+      v-if="isDean"
+      class="sidebar-link d-flex justify-content-between align-items-center"
+      :class="{ active: active('/coordinator-requests') }"
+      to="/coordinator-requests"
+    >
+      <span class="d-flex align-items-center gap-2">
+        <span class="icon">🧭</span>
+        <span class="label" v-if="!props.collapsed">Coordinator Review</span>
+      </span>
+    </RouterLink>
+
+    <!-- WORK: daily tasks (AMO) -->
+    <div v-if="isAdmin && !props.collapsed" class="group-head group-static">Work</div>
+<RouterLink
+      v-if="isAdmin"
+      class="sidebar-link d-flex justify-content-between align-items-center"
+      :class="{ active: active('/pending-requests') }"
+      to="/pending-requests"
+    >
+      <span class="d-flex align-items-center gap-2">
+        <span class="icon">⏳</span>
+        <span class="label" v-if="!props.collapsed">Pending Requests</span>
+      </span>
+
+      <span v-if="!props.collapsed" class="badge bg-danger">{{ pendingCount }}</span>
+    </RouterLink>
+
+<RouterLink
+      v-if="isAdmin"
+      class="sidebar-link d-flex justify-content-between align-items-center"
+      :class="{ active: active('/pending-inspection') }"
+      to="/pending-inspection"
+    >
+      <span class="d-flex align-items-center gap-2">
+        <span class="icon">🔍</span>
+        <span class="label" v-if="!props.collapsed">Pending Inspection</span>
+      </span>
+
+      <span v-if="!props.collapsed" class="badge bg-danger">{{ pendingInspectionCount }}</span>
+    </RouterLink>
+
+<RouterLink
+      class="sidebar-link d-flex justify-content-between align-items-center"
+      :class="{ active: active('/equipment-reports') }"
+      to="/equipment-reports"
+    >
+      <span class="d-flex align-items-center gap-2">
+        <span class="icon">🛠️</span>
+        <span class="label" v-if="!props.collapsed">Report Equipment</span>
+      </span>
+
+      <span
+        v-if="isAdmin && !props.collapsed && equipmentReportCount > 0"
+        class="badge bg-danger"
+      >{{ equipmentReportCount }}</span>
+    </RouterLink>
+
+    <!-- STOCK (AMO, collapsible) -->
+    <button v-if="isAdmin && !props.collapsed" type="button" class="group-head" @click="toggleGroup('stock')">
+      <span>Stock</span>
+      <span class="group-arrow" :style="{ transform: openGroups.stock ? 'rotate(180deg)' : 'rotate(0deg)' }">▼</span>
+    </button>
+    <div v-show="!isAdmin || props.collapsed || openGroups.stock">
+<RouterLink v-if="isAdmin" class="sidebar-link" :class="{ active: active('/inventory') }" to="/inventory">
       <span class="icon">📦</span>
       <span class="label" v-if="!props.collapsed">Inventory</span>
     </RouterLink>
 
-    <RouterLink v-if="isAdmin" class="sidebar-link" :class="{ active: active('/disposal-records') }" to="/disposal-records">
-      <span class="icon">🗑️</span>
-      <span class="label" v-if="!props.collapsed">Disposal Records</span>
+<RouterLink v-if="isAdmin" class="sidebar-link" :class="{ active: active('/office-supplies') }" to="/office-supplies">
+      <span class="icon">🧾</span>
+      <span class="label" v-if="!props.collapsed">Office Supplies</span>
+    </RouterLink>
+
+<RouterLink v-if="isAdmin" class="sidebar-link" :class="{ active: active('/school-equipment') }" to="/school-equipment">
+      <span class="icon">🎒</span>
+      <span class="label" v-if="!props.collapsed">School Equipments</span>
     </RouterLink>
 
 <!-- Uniforms dropdown (CLICK VERSION) -->
@@ -203,53 +284,48 @@ watch(() => route.fullPath, refreshSoon)
 
 </div>
 
-    <RouterLink v-if="isAdmin" class="sidebar-link" :class="{ active: active('/office-supplies') }" to="/office-supplies">
-      <span class="icon">🧾</span>
-      <span class="label" v-if="!props.collapsed">Office Supplies</span>
-    </RouterLink>
 
-    <RouterLink v-if="isAdmin" class="sidebar-link" :class="{ active: active('/school-equipment') }" to="/school-equipment">
-      <span class="icon">🎒</span>
-      <span class="label" v-if="!props.collapsed">School Equipments</span>
-    </RouterLink>
-
-    <RouterLink class="sidebar-link" :class="{ active: active('/consumption-report') }" to="/consumption-report">
-      <span class="icon">📅</span>
-      <span class="label" v-if="!props.collapsed">Monthly Consumption</span>
-    </RouterLink>
-
-    <RouterLink v-if="isAdmin" class="sidebar-link" :class="{ active: active('/equipment-distribution') }" to="/equipment-distribution">
+<RouterLink v-if="isAdmin" class="sidebar-link" :class="{ active: active('/equipment-distribution') }" to="/equipment-distribution">
       <span class="icon">🏢</span>
       <span class="label" v-if="!props.collapsed">Equipment Distribution</span>
     </RouterLink>
 
-    <RouterLink
-      v-if="isDean"
-      class="sidebar-link d-flex justify-content-between align-items-center"
-      :class="{ active: active('/coordinator-requests') }"
-      to="/coordinator-requests"
-    >
-      <span class="d-flex align-items-center gap-2">
-        <span class="icon">🧭</span>
-        <span class="label" v-if="!props.collapsed">Coordinator Review</span>
-      </span>
+<RouterLink v-if="isAdmin" class="sidebar-link" :class="{ active: active('/disposal-records') }" to="/disposal-records">
+      <span class="icon">🗑️</span>
+      <span class="label" v-if="!props.collapsed">Disposal Records</span>
+    </RouterLink>
+    </div>
+
+    <!-- REPORTS (AMO, collapsible) -->
+    <button v-if="isAdmin && !props.collapsed" type="button" class="group-head" @click="toggleGroup('reports')">
+      <span>Reports</span>
+      <span class="group-arrow" :style="{ transform: openGroups.reports ? 'rotate(180deg)' : 'rotate(0deg)' }">▼</span>
+    </button>
+    <div v-show="!isAdmin || props.collapsed || openGroups.reports">
+<RouterLink class="sidebar-link" :class="{ active: active('/consumption-report') }" to="/consumption-report">
+      <span class="icon">📅</span>
+      <span class="label" v-if="!props.collapsed">Monthly Consumption</span>
     </RouterLink>
 
-    <RouterLink
-      v-if="isAdmin"
-      class="sidebar-link d-flex justify-content-between align-items-center"
-      :class="{ active: active('/pending-inspection') }"
-      to="/pending-inspection"
-    >
-      <span class="d-flex align-items-center gap-2">
-        <span class="icon">🔍</span>
-        <span class="label" v-if="!props.collapsed">Pending Inspection</span>
-      </span>
-
-      <span v-if="!props.collapsed" class="badge bg-danger">{{ pendingInspectionCount }}</span>
+<RouterLink v-if="isAdmin" class="sidebar-link" :class="{ active: active('/reports') }" to="/reports">
+      <span class="icon">📊</span>
+      <span class="label" v-if="!props.collapsed">Reports</span>
     </RouterLink>
 
-    <RouterLink
+<RouterLink v-if="isAdmin" class="sidebar-link" :class="{ active: active('/logs') }" to="/logs">
+      <span class="icon">📜</span>
+      <span class="label" v-if="!props.collapsed">Logs</span>
+    </RouterLink>
+    </div>
+
+    <!-- ACCOUNT -->
+    <div v-if="isAdmin && !props.collapsed" class="group-head group-static">Account</div>
+<RouterLink class="sidebar-link" :class="{ active: active('/request') }" to="/request">
+      <span class="icon">📝</span>
+      <span class="label" v-if="!props.collapsed">Request Item</span>
+    </RouterLink>
+
+<RouterLink
       class="sidebar-link d-flex justify-content-between align-items-center"
       :class="{ active: active('/settings') }"
       to="/settings"
@@ -264,55 +340,30 @@ watch(() => route.fullPath, refreshSoon)
         class="badge bg-danger"
       >{{ accountRequestCount }}</span>
     </RouterLink>
-
-    <RouterLink class="sidebar-link" :class="{ active: active('/request') }" to="/request">
-      <span class="icon">📝</span>
-      <span class="label" v-if="!props.collapsed">Request Item</span>
-    </RouterLink>
-
-    <RouterLink
-      class="sidebar-link d-flex justify-content-between align-items-center"
-      :class="{ active: active('/equipment-reports') }"
-      to="/equipment-reports"
-    >
-      <span class="d-flex align-items-center gap-2">
-        <span class="icon">🛠️</span>
-        <span class="label" v-if="!props.collapsed">Report Equipment</span>
-      </span>
-
-      <span
-        v-if="isAdmin && !props.collapsed && equipmentReportCount > 0"
-        class="badge bg-danger"
-      >{{ equipmentReportCount }}</span>
-    </RouterLink>
-
-    <RouterLink
-      v-if="isAdmin"
-      class="sidebar-link d-flex justify-content-between align-items-center"
-      :class="{ active: active('/pending-requests') }"
-      to="/pending-requests"
-    >
-      <span class="d-flex align-items-center gap-2">
-        <span class="icon">⏳</span>
-        <span class="label" v-if="!props.collapsed">Pending Requests</span>
-      </span>
-
-      <span v-if="!props.collapsed" class="badge bg-danger">{{ pendingCount }}</span>
-    </RouterLink>
-
-    <RouterLink v-if="isAdmin" class="sidebar-link" :class="{ active: active('/reports') }" to="/reports">
-      <span class="icon">📊</span>
-      <span class="label" v-if="!props.collapsed">Reports</span>
-    </RouterLink>
-
-    <RouterLink v-if="isAdmin" class="sidebar-link" :class="{ active: active('/logs') }" to="/logs">
-      <span class="icon">📜</span>
-      <span class="label" v-if="!props.collapsed">Logs</span>
-    </RouterLink>
   </aside>
 </template>
 
 <style scoped>
+.group-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin: 10px 0 2px;
+  padding: 4px 12px;
+  background: none;
+  border: 0;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-align: left;
+}
+button.group-head { cursor: pointer; }
+button.group-head:hover { color: #fff; }
+.group-arrow { font-size: 0.6rem; transition: transform 0.2s; }
+
 .sidebar {
   position: sticky;
   top: 0;

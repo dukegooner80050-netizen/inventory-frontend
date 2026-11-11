@@ -659,7 +659,11 @@ onMounted(async () => {
     <template v-if="activeTab === 'GENERAL'">
     <div class="row g-3 align-items-start">
 
-      <div class="col-12 col-md-6 col-xl-4">
+      <div v-if="canEditLimit" class="col-12">
+        <h6 class="text-uppercase text-muted small fw-semibold mb-0">My preferences</h6>
+      </div>
+
+      <div class="col-12 col-md-6">
       <!-- APPEARANCE -->
       <div class="card shadow-sm mb-3">
         <div class="card-body">
@@ -693,6 +697,28 @@ onMounted(async () => {
         </div>
       </div>
 
+      </div>
+      <div class="col-12 col-md-6">
+      <!-- CHANGE PASSWORD (everyone) -->
+      <div class="card shadow-sm mb-3">
+        <div class="card-body">
+          <h6 class="mb-2">Change Password</h6>
+          <p class="text-muted small">
+            Choose a new password for your own account. Your other devices
+            will be signed out.
+          </p>
+          <ChangePasswordForm />
+        </div>
+      </div>
+
+      </div>
+
+      <template v-if="canEditLimit">
+      <div class="col-12 mt-2">
+        <h6 class="text-uppercase text-muted small fw-semibold mb-0">System rules (AMO only)</h6>
+      </div>
+
+      <div class="col-12 col-md-6">
       <div v-if="canEditLimit && !loading" class="card shadow-sm mb-3">
         <div class="card-body">
           <h6 class="mb-2">Student ID Length</h6>
@@ -752,21 +778,7 @@ onMounted(async () => {
       </div>
 
       </div>
-      <div class="col-12 col-md-6 col-xl-4">
-      <!-- CHANGE PASSWORD (everyone) -->
-      <div class="card shadow-sm mb-3">
-        <div class="card-body">
-          <h6 class="mb-2">Change Password</h6>
-          <p class="text-muted small">
-            Choose a new password for your own account. Your other devices
-            will be signed out.
-          </p>
-          <ChangePasswordForm />
-        </div>
-      </div>
-
-      </div>
-      <div class="col-12 col-md-6 col-xl-4">
+      <div class="col-12 col-md-6">
       <div v-if="canEditLimit && !loading" class="card shadow-sm mb-3">
         <div class="card-body">
 
@@ -862,7 +874,9 @@ onMounted(async () => {
           <button class="btn btn-primary" :disabled="slSaving" @click="askSaveStockLevels">Save</button>
         </div>
       </div>
+
       </div>
+      </template>
 
     </div>
     </template>

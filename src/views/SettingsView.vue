@@ -657,13 +657,13 @@ onMounted(async () => {
     <!-- ============================================================ -->
 
     <template v-if="activeTab === 'GENERAL'">
-    <div class="row g-3 align-items-start">
+    <div class="row g-3 align-items-start" style="max-width: 760px">
 
       <div v-if="canEditLimit" class="col-12">
         <h6 class="text-uppercase text-muted small fw-semibold mb-0">My preferences</h6>
       </div>
 
-      <div class="col-12 col-md-6">
+      <div class="col-12">
       <!-- APPEARANCE -->
       <div class="card shadow-sm mb-3">
         <div class="card-body">
@@ -698,7 +698,7 @@ onMounted(async () => {
       </div>
 
       </div>
-      <div class="col-12 col-md-6">
+      <div class="col-12">
       <!-- CHANGE PASSWORD (everyone) -->
       <div class="card shadow-sm mb-3">
         <div class="card-body">
@@ -718,7 +718,7 @@ onMounted(async () => {
         <h6 class="text-uppercase text-muted small fw-semibold mb-0">System rules (AMO only)</h6>
       </div>
 
-      <div class="col-12 col-md-6">
+      <div class="col-12">
       <div v-if="canEditLimit && !loading" class="card shadow-sm mb-3">
         <div class="card-body">
           <h6 class="mb-2">Student ID Length</h6>
@@ -778,7 +778,7 @@ onMounted(async () => {
       </div>
 
       </div>
-      <div class="col-12 col-md-6">
+      <div class="col-12">
       <div v-if="canEditLimit && !loading" class="card shadow-sm mb-3">
         <div class="card-body">
 

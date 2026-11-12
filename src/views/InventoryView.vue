@@ -285,6 +285,19 @@ const filteredItems = computed(() => {
   });
 });
 
+// SORT BY QUANTITY: click the Qty header to cycle lowest first -> highest first -> original order.
+const qtySort = ref(null); // null | "asc" | "desc"
+function toggleQtySort() {
+  qtySort.value = qtySort.value === null ? "asc" : qtySort.value === "asc" ? "desc" : null;
+}
+const sortedItems = computed(() => {
+  if (!qtySort.value) return filteredItems.value;
+  const dir = qtySort.value === "asc" ? 1 : -1;
+  return [...filteredItems.value].sort(
+    (a, b) => dir * ((Number(a.qty) || 0) - (Number(b.qty) || 0)),
+  );
+});
+
 
 // FILTERED DAMAGED ITEMS
 
@@ -596,8 +609,18 @@ function formatDate(date) {
                   Stock Level
                 </th>
 
-                <th>
+                <th
+                  class="sortable-th"
+                  role="button"
+                  tabindex="0"
+                  :aria-sort="qtySort === 'asc' ? 'ascending' : qtySort === 'desc' ? 'descending' : 'none'"
+                  title="Click to sort by quantity"
+                  @click="toggleQtySort"
+                  @keydown.enter.prevent="toggleQtySort"
+                  @keydown.space.prevent="toggleQtySort"
+                >
                   Qty
+                  <span class="sort-arrow">{{ qtySort === "asc" ? "▲" : qtySort === "desc" ? "▼" : "⇅" }}</span>
                 </th>
 
               </template>
@@ -649,7 +672,7 @@ function formatDate(date) {
               ">
 
 
-              <tr v-for="item in filteredItems" :key="item.id">
+              <tr v-for="item in sortedItems" :key="item.id">
 
                 <td>
                   {{ item.name }}
@@ -836,6 +859,9 @@ function formatDate(date) {
 
 
 <style scoped>
+.sortable-th { cursor: pointer; user-select: none; white-space: nowrap; }
+.sortable-th:hover { color: #0d6efd; }
+.sort-arrow { font-size: 0.7rem; margin-left: 4px; opacity: 0.7; }
 .table-scroll {
   max-height: 70vh;
   overflow-y: auto;

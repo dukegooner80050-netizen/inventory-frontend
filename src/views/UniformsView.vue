@@ -119,7 +119,7 @@ const departmentVariants = computed(() => {
 
 // Search: every typed word must match name, description, department,
 // gender, size, price, status or quantity of the row.
-const filteredVariants = computed(() => {
+const searchedVariants = computed(() => {
   const words = searchQuery.value.toLowerCase().split(/\s+/).filter(Boolean);
   if (!words.length) {
     return departmentVariants.value;
@@ -139,6 +139,21 @@ const filteredVariants = computed(() => {
       .toLowerCase();
     return words.every((w) => text.includes(w));
   });
+});
+
+// Sort: click Price or Qty. Lowest first -> highest first -> original order.
+const sortKey = ref(null); // "price" | "quantity" | null
+const sortDir = ref("asc");
+function toggleSort(key) {
+  if (sortKey.value !== key) { sortKey.value = key; sortDir.value = "asc"; }
+  else if (sortDir.value === "asc") { sortDir.value = "desc"; }
+  else { sortKey.value = null; sortDir.value = "asc"; }
+}
+const filteredVariants = computed(() => {
+  if (!sortKey.value) return searchedVariants.value;
+  const dir = sortDir.value === "asc" ? 1 : -1;
+  const k = sortKey.value;
+  return [...searchedVariants.value].sort((a, b) => dir * ((Number(a[k]) || 0) - (Number(b[k]) || 0)));
 });
 
 /* LOAD DATA */
@@ -890,9 +905,25 @@ const visibleTypes = computed(() => {
               <th>Department</th>
               <th>Gender</th>
               <th>Size</th>
-              <th style="width: 120px">Price</th>
+              <th
+                class="sortable-th" style="width: 120px" title="Click to sort"
+                role="button"
+                tabindex="0"
+                :aria-sort="sortKey === 'price' ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'"
+                @click="toggleSort('price')"
+                @keydown.enter.prevent="toggleSort('price')"
+                @keydown.space.prevent="toggleSort('price')"
+              >Price <span class="sort-arrow">{{ sortKey === 'price' ? (sortDir === 'asc' ? '▲' : '▼') : '⇅' }}</span></th>
               <th>Status</th>
-              <th style="width: 100px">Qty</th>
+              <th
+                class="sortable-th" style="width: 100px" title="Click to sort"
+                role="button"
+                tabindex="0"
+                :aria-sort="sortKey === 'quantity' ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'"
+                @click="toggleSort('quantity')"
+                @keydown.enter.prevent="toggleSort('quantity')"
+                @keydown.space.prevent="toggleSort('quantity')"
+              >Qty <span class="sort-arrow">{{ sortKey === 'quantity' ? (sortDir === 'asc' ? '▲' : '▼') : '⇅' }}</span></th>
               <th style="width: 260px" class="text-center">Action</th>
             </tr>
           </thead>
@@ -1577,6 +1608,10 @@ const visibleTypes = computed(() => {
 </template>
 
 <style scoped>
+.sortable-th { cursor: pointer; user-select: none; white-space: nowrap; }
+.sortable-th:hover { color: #0d6efd; }
+.sort-arrow { font-size: 0.7rem; margin-left: 4px; opacity: 0.7; }
+
 .uniform-search {
   width: 280px;
   max-width: 100%;

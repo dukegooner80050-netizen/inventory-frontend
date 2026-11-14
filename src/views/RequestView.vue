@@ -23,6 +23,23 @@ import { isReturnableType } from "../services/itemTypes";
 const user = getCurrentUser();
 const userRole = String(user?.role || "").toLowerCase();
 const listContainer = ref(null);
+
+// "Just added" feedback: the new row flashes and a short message shows by the Add button.
+const flashKey = ref("");
+const addedMsg = ref("");
+let addedTimer = null;
+const isFlash = (key) => !!flashKey.value && (key === flashKey.value || key === flashKey.value + "-r");
+async function showAdded(key, text) {
+  flashKey.value = "";
+  await nextTick(); // lets the animation start again when the same line is added twice
+  flashKey.value = key;
+  addedMsg.value = text;
+  clearTimeout(addedTimer);
+  addedTimer = setTimeout(() => {
+    flashKey.value = "";
+    addedMsg.value = "";
+  }, 2500);
+}
 const activeTab = ref("create");
 const route = useRoute();
 
@@ -744,6 +761,7 @@ async function addToList() {
         requestUniforms.value.push({ ...base(), quantity: toReserve, reserve: true });
       }
     }
+    showAdded("uniform-" + variant.idUnifvariant, `Added: ${base().uniformName} \u00d7 ${quantity}`);
   }
 
   // NORMAL INVENTORY ITEM //
@@ -766,6 +784,7 @@ async function addToList() {
         return;
       }
       existing.qty = newQuantity;
+      showAdded("item-" + existing.itemId, `Added: ${existing.itemName} \u00d7 ${quantity} (now ${newQuantity})`);
     } else {
       if (maxItems.value !== null && requestItems.value.length >= maxItems.value) {
         error.value = `A request can have at most ${maxItems.value} different items. Submit this one first, then make another request.`;
@@ -778,6 +797,7 @@ async function addToList() {
         itemType: itemType.value,
         qty: quantity,
       });
+      showAdded("item-" + selectedItem.value.id, `Added: ${selectedItem.value.name} \u00d7 ${quantity}`);
     }
   }
 
@@ -1272,7 +1292,10 @@ watch(activeTab, async () => {
         </template>
 
         <div v-if="error" class="alert alert-danger py-2">{{ error }}</div>
-        <div class="text-end">
+        <div class="d-flex align-items-center justify-content-end gap-3">
+          <span v-if="addedMsg" class="text-success fw-semibold small added-msg" role="status">
+            <i class="bi bi-check-circle-fill me-1"></i>{{ addedMsg }}
+          </span>
           <button
             class="btn btn-success me-2"
             :disabled="
@@ -1292,7 +1315,12 @@ watch(activeTab, async () => {
         class="card shadow-sm p-4 d-flex flex-column"
         style="flex: 1; height: 100%"
       >
-        <h4 class="mb-3">Request List</h4>
+        <h4 class="mb-3">
+          Request List
+          <span class="badge rounded-pill ms-1" :class="requestItems.length + requestUniforms.length ? 'bg-success' : 'bg-secondary'">
+            {{ requestItems.length + requestUniforms.length }}
+          </span>
+        </h4>
 
         <div class="flex-grow-1 d-flex flex-column">
           <div
@@ -1313,6 +1341,7 @@ watch(activeTab, async () => {
                 <tr
                   v-for="(item, index) in requestItems"
                   :key="'item-' + item.itemId"
+                  :class="{ 'row-flash': isFlash('item-' + item.itemId) }"
                 >
                   <td>{{ item.itemName }}</td>
 
@@ -1336,6 +1365,7 @@ watch(activeTab, async () => {
                 <tr
                   v-for="(uniform, index) in requestUniforms"
                   :key="'uniform-' + uniform.uniformVariantId + (uniform.reserve ? '-r' : '')"
+                  :class="{ 'row-flash': isFlash('uniform-' + uniform.uniformVariantId + (uniform.reserve ? '-r' : '')) }"
                 >
                   <td>
                     <div>
@@ -2043,6 +2073,20 @@ watch(activeTab, async () => {
 </template>
 
 <style scoped>
+.row-flash > td {
+  animation: rowFlash 2.2s ease-out;
+}
+@keyframes rowFlash {
+  0%, 35% { background-color: #b7ebc6; }
+  100% { background-color: transparent; }
+}
+.added-msg {
+  animation: addedIn 0.25s ease-out;
+}
+@keyframes addedIn {
+  from { opacity: 0; transform: translateY(3px); }
+  to { opacity: 1; transform: none; }
+}
 .card-body {
   overflow-y: auto;
 }

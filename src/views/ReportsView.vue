@@ -32,15 +32,44 @@ async function refresh() {
   logs.value = activity;
 }
 
+// Custom date range (From / To). When both are filled in they replace Weekly/Monthly.
+const dateFrom = ref("");
+const dateTo = ref("");
+const rangeInvalid = computed(
+  () => !!(dateFrom.value && dateTo.value && dateFrom.value > dateTo.value),
+);
+const customActive = computed(
+  () => !!(dateFrom.value && dateTo.value) && !rangeInvalid.value,
+);
+
 function setRange(days) {
   rangeDays.value = days;
+  dateFrom.value = "";
+  dateTo.value = "";
 }
 
-const reportRangeLabel = computed(() => {
+// First and last moment of the period being reported.
+const rangeBounds = computed(() => {
+  if (customActive.value) {
+    return {
+      start: new Date(`${dateFrom.value}T00:00:00`),
+      end: new Date(`${dateTo.value}T23:59:59.999`),
+    };
+  }
   const end = new Date();
   const start = new Date();
   start.setHours(0, 0, 0, 0);
   start.setDate(end.getDate() - (rangeDays.value - 1));
+  return { start, end };
+});
+
+// Name of the report type, for headings and the Excel file.
+const rangeName = computed(() =>
+  customActive.value ? "Custom" : rangeDays.value === DAYS_WEEKLY ? "Weekly" : "Monthly",
+);
+
+const reportRangeLabel = computed(() => {
+  const { start, end } = rangeBounds.value;
   const fmt = (d) =>
     d.toLocaleDateString("en-PH", { year: "numeric", month: "short", day: "numeric" });
   return `${fmt(start)} \u2013 ${fmt(end)}`;
@@ -53,12 +82,9 @@ function parseDateLike(d) {
   return isNaN(dt) ? null : dt;
 }
 
-function withinDays(dateObj, days) {
+function withinRange(dateObj) {
   if (!dateObj) return true;
-  const end = new Date();
-  const start = new Date();
-  start.setHours(0, 0, 0, 0);
-  start.setDate(end.getDate() - (days - 1));
+  const { start, end } = rangeBounds.value;
   return dateObj >= start && dateObj <= end;
 }
 
@@ -119,7 +145,7 @@ const rejectedRequests = computed(
 /* ===== REQUEST SUMMARY ===== */
 const recentRequests = computed(() =>
   requests.value.filter((r) =>
-    withinDays(parseDateLike(r.request_date), rangeDays.value),
+    withinRange(parseDateLike(r.request_date)),
   ),
 );
 
@@ -140,7 +166,7 @@ const recentLogs = computed(() =>
       parseDateLike(l.timestamp) ||
       parseDateLike(`${l.date || ""} ${l.time || ""}`) ||
       parseDateLike(l.date);
-    return withinDays(d, rangeDays.value);
+    return withinRange(d);
   }),
 );
 
@@ -254,7 +280,7 @@ async function exportToExcel() {
   // The Excel library is large; it is only fetched when someone exports.
   const XLSX = await import("xlsx");
 
-  const rangeLabel = rangeDays.value === DAYS_WEEKLY ? "Weekly" : "Monthly";
+  const rangeLabel = rangeName.value;
 
   const wb = XLSX.utils.book_new();
 
@@ -359,7 +385,8 @@ async function exportToExcel() {
   XLSX.utils.book_append_sheet(wb, logsSheet, "Activity Logs");
 
   const today = new Date().toISOString().slice(0, 10);
-  XLSX.writeFile(wb, `CIMS_Report_${rangeLabel}_${today}.xlsx`);
+  const tag = customActive.value ? `${dateFrom.value}_to_${dateTo.value}` : `${rangeLabel}_${today}`;
+  XLSX.writeFile(wb, `CIMS_Report_${tag}.xlsx`);
 }
 </script>
 
@@ -370,13 +397,13 @@ async function exportToExcel() {
     >
       <div>
         <h3 class="mb-0">Reports</h3>
-        <div class="text-muted small">Showing: last {{ rangeDays }} days</div>
+        <div class="text-muted small">Showing: {{ customActive ? reportRangeLabel : `last ${rangeDays} days` }}</div>
       </div>
 
       <div class="d-flex gap-2 no-print">
         <button
           class="btn"
-          :class="rangeDays === DAYS_WEEKLY ? 'btn-primary' : 'btn-outline-primary'"
+          :class="!customActive && rangeDays === DAYS_WEEKLY ? 'btn-primary' : 'btn-outline-primary'"
           @click="setRange(DAYS_WEEKLY)"
         >
           Weekly Report
@@ -384,7 +411,7 @@ async function exportToExcel() {
 
         <button
           class="btn"
-          :class="rangeDays === DAYS_MONTHLY ? 'btn-success' : 'btn-outline-success'"
+          :class="!customActive && rangeDays === DAYS_MONTHLY ? 'btn-success' : 'btn-outline-success'"
           @click="setRange(DAYS_MONTHLY)"
         >
           Monthly Report
@@ -397,12 +424,41 @@ async function exportToExcel() {
       </div>
     </div>
 
+    <!-- CUSTOM DATE RANGE -->
+    <div class="card shadow-sm mb-3 no-print">
+      <div class="card-body py-2">
+        <div class="d-flex flex-wrap align-items-end gap-2">
+          <div>
+            <label class="form-label mb-1 small" for="rp-from">From</label>
+            <input id="rp-from" v-model="dateFrom" type="date" class="form-control form-control-sm" :max="dateTo || undefined" />
+          </div>
+          <div>
+            <label class="form-label mb-1 small" for="rp-to">To</label>
+            <input id="rp-to" v-model="dateTo" type="date" class="form-control form-control-sm" :min="dateFrom || undefined" />
+          </div>
+          <button
+            class="btn btn-sm btn-outline-secondary"
+            :disabled="!dateFrom && !dateTo"
+            @click="setRange(rangeDays)"
+          >
+            Clear dates
+          </button>
+          <div class="text-muted small ms-1">
+            Pick both dates to report on any period. Inventory counts are always current stock.
+          </div>
+        </div>
+        <div v-if="rangeInvalid" class="text-danger small mt-2">
+          &ldquo;From&rdquo; must be on or before &ldquo;To&rdquo;.
+        </div>
+      </div>
+    </div>
+
     <!-- PRINT-ONLY HEADER -->
     <div class="d-none d-print-block print-header mb-3">
       <h2 class="mb-0">Celtech Inventory Management System</h2>
       <div class="text-muted">
         Inventory &amp; Activity Report
-        &mdash; {{ rangeDays === DAYS_WEEKLY ? "Weekly" : "Monthly" }}
+        &mdash; {{ rangeName }}
         ({{ reportRangeLabel }})
       </div>
       <div class="text-muted small">
@@ -420,7 +476,7 @@ async function exportToExcel() {
             <div class="text-muted small">Remaining inventory items</div>
           </div>
 
-          <span class="badge bg-primary"> {{ rangeDays }} Days </span>
+          <span class="badge bg-primary"> {{ customActive ? "Custom range" : `${rangeDays} Days` }} </span>
         </div>
 
         <div class="row g-3 mb-4">
@@ -601,7 +657,7 @@ async function exportToExcel() {
             <div class="text-muted small">Request activity overview</div>
           </div>
 
-          <span class="badge bg-success"> {{ rangeDays }} Days </span>
+          <span class="badge bg-success"> {{ customActive ? "Custom range" : `${rangeDays} Days` }} </span>
         </div>
 
         <div class="row g-3">
@@ -655,7 +711,7 @@ async function exportToExcel() {
             </div>
           </div>
 
-          <span class="badge bg-dark"> {{ rangeDays }} Days </span>
+          <span class="badge bg-dark"> {{ customActive ? "Custom range" : `${rangeDays} Days` }} </span>
         </div>
 
         <div class="mb-3">

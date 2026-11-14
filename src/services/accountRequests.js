@@ -11,8 +11,8 @@ async function fetchAccountRequests() {
   return (await axios.get("/account-requests")).data;
 }
 
-export async function approveAccountRequest(id, role) {
-  return (await axios.post(`/account-requests/${id}/approve`, { role })).data;
+export async function approveAccountRequest(id, role, iddept = null) {
+  return (await axios.post(`/account-requests/${id}/approve`, { role, iddept: iddept || null })).data;
 }
 
 export async function declineAccountRequest(id) {

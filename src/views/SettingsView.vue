@@ -245,6 +245,7 @@ async function confirmSave() {
 
 const arLoading = ref(true);
 const arRequests = ref([]);
+const arDeptChoice = reactive({}); // { [idUsers]: iddept | "" } chosen while approving
 const arRoleChoice = reactive({}); // { [idUsers]: "amo" | "department_head" | "admin" | "instructor" | "cashier" }
 const ROLE_LABELS = {
   amo: "AMO",
@@ -264,8 +265,12 @@ async function loadAccountRequests() {
 
   try {
     arRequests.value = await listAccountRequests();
+    if (!deptList.value.length) {
+      try { deptList.value = await getDepartments(); } catch { deptList.value = []; }
+    }
     arRequests.value.forEach((r) => {
       if (!arRoleChoice[r.idUsers]) arRoleChoice[r.idUsers] = "instructor";
+      if (arDeptChoice[r.idUsers] === undefined) arDeptChoice[r.idUsers] = "";
     });
   } catch (e) {
     notify("danger", getErrorMessage(e));
@@ -320,7 +325,8 @@ async function arRunConfirmed() {
 
   try {
     if (arConfirmAction.value === "approve") {
-      await approveAccountRequest(target.idUsers, arConfirmRole.value);
+      const withDept = ["instructor", "department_head"].includes(arConfirmRole.value);
+      await approveAccountRequest(target.idUsers, arConfirmRole.value, withDept ? arDeptChoice[target.idUsers] : null);
       notify("success", `Approved "${target.full_name}" as ${ROLE_LABELS[arConfirmRole.value]}.`);
     } else {
       await declineAccountRequest(target.idUsers);
@@ -961,6 +967,7 @@ onMounted(async () => {
                   <th>Username</th>
                   <th>Signed up</th>
                   <th style="width: 150px">Role</th>
+                  <th style="width: 200px">Department</th>
                   <th style="width: 200px"></th>
                 </tr>
               </thead>
@@ -983,6 +990,18 @@ onMounted(async () => {
                     </select>
                   </td>
                   <td>
+                    <select
+                      v-if="['instructor', 'department_head'].includes(arRoleChoice[r.idUsers])"
+                      class="form-select form-select-sm"
+                      v-model="arDeptChoice[r.idUsers]"
+                      :aria-label="'Department for ' + r.full_name"
+                    >
+                      <option value="">Not set</option>
+                      <option v-for="d in deptList" :key="d.iddept" :value="d.iddept">{{ d.dept_name }}</option>
+                    </select>
+                    <span v-else class="text-muted">&mdash;</span>
+                  </td>
+                  <td>
                     <div class="d-flex gap-2">
                       <button class="btn btn-sm btn-success" @click="arOpenApprove(r)">
                         Approve
@@ -995,7 +1014,7 @@ onMounted(async () => {
                 </tr>
 
                 <tr v-if="arRequests.length === 0">
-                  <td colspan="5" class="text-center text-muted py-4">
+                  <td colspan="6" class="text-center text-muted py-4">
                     No accounts are waiting for approval.
                   </td>
                 </tr>
@@ -1273,6 +1292,18 @@ onMounted(async () => {
             <strong>{{ arConfirmTarget?.full_name }}</strong>
             ({{ arConfirmTarget?.username }})? The sign-up will be removed. They
             can sign up again if this was a mistake.
+          </p>
+
+          <p
+            v-if="arConfirmAction === 'approve' && ['instructor', 'department_head'].includes(arConfirmRole)"
+            class="small mb-2"
+            :class="arDeptChoice[arConfirmTarget?.idUsers] ? 'text-muted' : 'text-danger'"
+          >
+            Department:
+            <strong>{{ deptList.find((d) => String(d.iddept) === String(arDeptChoice[arConfirmTarget?.idUsers]))?.dept_name || "Not set" }}</strong>
+            <span v-if="!arDeptChoice[arConfirmTarget?.idUsers]">
+              &mdash; requests can't be routed to a department head until a department is set.
+            </span>
           </p>
 
           <p v-if="arConfirmAction === 'approve' && arConfirmRole === 'amo'" class="small text-danger mb-0">

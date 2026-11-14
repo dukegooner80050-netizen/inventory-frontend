@@ -35,6 +35,7 @@ async function refresh() {
 // Custom date range (From / To). When both are filled in they replace Weekly/Monthly.
 const dateFrom = ref("");
 const dateTo = ref("");
+const showRange = ref(false);
 const rangeInvalid = computed(
   () => !!(dateFrom.value && dateTo.value && dateFrom.value > dateTo.value),
 );
@@ -417,39 +418,39 @@ async function exportToExcel() {
           Monthly Report
         </button>
 
+        <div class="position-relative">
+          <button
+            class="btn"
+            :class="customActive ? 'btn-secondary' : 'btn-outline-secondary'"
+            @click="showRange = !showRange"
+          >
+            <i class="bi bi-calendar-range me-1"></i>
+            {{ customActive ? reportRangeLabel : "Custom Range" }}
+          </button>
+          <div
+            v-if="showRange"
+            class="card shadow position-absolute end-0 mt-1 p-3"
+            style="z-index: 1050; width: 260px"
+          >
+            <label class="form-label mb-1 small" for="rp-from">From</label>
+            <input id="rp-from" v-model="dateFrom" type="date" class="form-control form-control-sm mb-2" :max="dateTo || undefined" />
+            <label class="form-label mb-1 small" for="rp-to">To</label>
+            <input id="rp-to" v-model="dateTo" type="date" class="form-control form-control-sm mb-2" :min="dateFrom || undefined" />
+            <div v-if="rangeInvalid" class="text-danger small mb-2">
+              &ldquo;From&rdquo; must be on or before &ldquo;To&rdquo;.
+            </div>
+            <div class="d-flex gap-2">
+              <button class="btn btn-sm btn-outline-secondary" :disabled="!dateFrom && !dateTo" @click="setRange(rangeDays)">Clear</button>
+              <button class="btn btn-sm btn-primary ms-auto" @click="showRange = false">Done</button>
+            </div>
+            <div class="text-muted small mt-2">Inventory is always current stock.</div>
+          </div>
+        </div>
+
         <button type="button" class="btn btn-dark" @click="exportToExcel">
           <i class="bi bi-file-earmark-excel me-1"></i>
           Export to Excel
         </button>
-      </div>
-    </div>
-
-    <!-- CUSTOM DATE RANGE -->
-    <div class="card shadow-sm mb-3 no-print">
-      <div class="card-body py-2">
-        <div class="d-flex flex-wrap align-items-end gap-2">
-          <div>
-            <label class="form-label mb-1 small" for="rp-from">From</label>
-            <input id="rp-from" v-model="dateFrom" type="date" class="form-control form-control-sm" :max="dateTo || undefined" />
-          </div>
-          <div>
-            <label class="form-label mb-1 small" for="rp-to">To</label>
-            <input id="rp-to" v-model="dateTo" type="date" class="form-control form-control-sm" :min="dateFrom || undefined" />
-          </div>
-          <button
-            class="btn btn-sm btn-outline-secondary"
-            :disabled="!dateFrom && !dateTo"
-            @click="setRange(rangeDays)"
-          >
-            Clear dates
-          </button>
-          <div class="text-muted small ms-1">
-            Pick both dates to report on any period. Inventory counts are always current stock.
-          </div>
-        </div>
-        <div v-if="rangeInvalid" class="text-danger small mt-2">
-          &ldquo;From&rdquo; must be on or before &ldquo;To&rdquo;.
-        </div>
       </div>
     </div>
 

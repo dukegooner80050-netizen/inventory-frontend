@@ -9,6 +9,15 @@ export async function updateStudentIdMaxLength(value) {
     return (await axios.put("/settings/student-id-length", { student_id_max_length: value })).data;
 }
 
+// Most different items one request may hold. Everyone can read it; AMO sets it.
+export async function getMaxItemsPerRequest() {
+    return (await axios.get("/settings/max-items", { silent: true })).data.max_items_per_request;
+}
+
+export async function updateMaxItemsPerRequest(value) {
+    return (await axios.put("/settings/max-items", { max_items_per_request: value })).data;
+}
+
 export async function getMonthlyRequestLimit() {
     return (await axios.get("/settings/monthly-request-limit")).data;
 }

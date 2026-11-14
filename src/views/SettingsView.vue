@@ -3,6 +3,8 @@ import { ref, reactive, computed, onMounted, watch } from "vue";
 import { useRoute } from "vue-router";
 import {
   getMonthlyRequestLimit,
+  getMaxItemsPerRequest,
+  updateMaxItemsPerRequest,
   updateMonthlyRequestLimit,
   getReturnPeriods,
   updateReturnPeriods,
@@ -175,6 +177,9 @@ async function loadGeneral() {
 
     sidMax.value = await getStudentIdMaxLength();
     sidNew.value = sidMax.value;
+
+    miMax.value = await getMaxItemsPerRequest();
+    miNew.value = miMax.value;
 
     const levels = await getStockLevels();
     Object.assign(slEquipment, levels.school_equipment);
@@ -385,6 +390,28 @@ async function saveSid() {
     notify("danger", getErrorMessage(e));
   } finally {
     sidSaving.value = false;
+  }
+}
+
+// Maximum different items per request (General tab)
+const miMax = ref(10);
+const miNew = ref(10);
+const miSaving = ref(false);
+async function saveMi() {
+  const n = Number(miNew.value);
+  if (!Number.isInteger(n) || n < 1 || n > 50) {
+    notify("danger", "Enter a whole number from 1 to 50.");
+    return;
+  }
+  miSaving.value = true;
+  try {
+    const res = await updateMaxItemsPerRequest(n);
+    miMax.value = res.max_items_per_request;
+    notify("success", "Maximum items per request saved.");
+  } catch (e) {
+    notify("danger", getErrorMessage(e));
+  } finally {
+    miSaving.value = false;
   }
 }
 
@@ -716,6 +743,34 @@ onMounted(async () => {
       <template v-if="canEditLimit">
       <div class="col-12 mt-2">
         <h6 class="text-uppercase text-muted small fw-semibold mb-0">System rules (AMO only)</h6>
+      </div>
+
+      <div class="col-12">
+      <div v-if="canEditLimit && !loading" class="card shadow-sm mb-3">
+        <div class="card-body">
+          <h6 class="mb-2">Maximum Items per Request</h6>
+          <p class="text-muted small">
+            Most different items one request can hold (uniform lines are not
+            counted; the AMO is exempt). Currently:
+            <strong>{{ miMax }}</strong> items.
+          </p>
+          <div class="input-group">
+            <input
+              id="st-max-items"
+              name="max_items_per_request"
+              type="number"
+              min="1"
+              max="50"
+              class="form-control"
+              v-model.number="miNew"
+              :disabled="miSaving"
+            />
+            <button class="btn btn-primary" :disabled="miSaving || miNew === miMax" @click="saveMi">
+              Save
+            </button>
+          </div>
+        </div>
+      </div>
       </div>
 
       <div class="col-12">

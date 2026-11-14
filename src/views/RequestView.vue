@@ -14,7 +14,7 @@ import {
 import { getCurrentUser } from "../services/storage";
 import { getItems } from "../services/items";
 import { TYPE_B, OFFICE_TYPE_OPTIONS } from "../services/itemTypes";
-import { getMonthlyRequestLimit, getStudentIdMaxLength } from "../services/settings";
+import { getMonthlyRequestLimit, getStudentIdMaxLength, getMaxItemsPerRequest } from "../services/settings";
 import DueBadge from "../components/DueBadge.vue";
 import { reportReturn } from "../services/returnReports";
 import { isReturnableType } from "../services/itemTypes";
@@ -126,6 +126,7 @@ const warningMessage = ref("");
 // LOAD DATA //
 
 const monthlyLimit = ref(null);
+const maxItems = ref(null); // most different items per request (null = no cap, e.g. AMO)
 
 // Uniform-only requests have no monthly limit, so they are not counted.
 const requestsThisMonth = computed(() => {
@@ -150,6 +151,7 @@ onMounted(async () => {
   applyRouteQuery();
 
   if (user?.role !== "amo") {
+    getMaxItemsPerRequest().then((n) => (maxItems.value = n)).catch(() => {});
     try {
       const res = await getMonthlyRequestLimit();
       monthlyLimit.value = res.monthly_request_limit;
@@ -765,6 +767,10 @@ async function addToList() {
       }
       existing.qty = newQuantity;
     } else {
+      if (maxItems.value !== null && requestItems.value.length >= maxItems.value) {
+        error.value = `A request can have at most ${maxItems.value} different items. Submit this one first, then make another request.`;
+        return;
+      }
       requestItems.value.push({
         itemId: selectedItem.value.id,
         itemName: selectedItem.value.name,

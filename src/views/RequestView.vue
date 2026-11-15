@@ -1490,12 +1490,12 @@ watch(activeTab, async () => {
               v-model="roomOther"
               type="text"
               class="form-control mt-2"
-              maxlength="200"
+              maxlength="100"
               placeholder="Specify the room or place"
               aria-label="Specify the room or place"
             />
-            <div class="form-text text-end" :class="{ 'text-danger': roomOther.length >= 200 }">
-              {{ roomOther.length }} / 200
+            <div class="form-text text-end" :class="{ 'text-danger': roomOther.length >= 100 }">
+              {{ roomOther.length }} / 100
             </div>
           </div>
         </div>

@@ -231,8 +231,8 @@ onMounted(refresh)
         </div>
         <div class="modal-body">
           <label for="flag-note" class="form-label">What is your concern?</label>
-          <textarea id="flag-note" name="flag_note" v-model="flagNote" class="form-control" rows="3" maxlength="500" placeholder="The AMO will see this note."></textarea>
-<div class="form-text text-end" :class="{ 'text-danger': (flagNote || '').length >= 500 }">{{ (flagNote || '').length }} / 500</div>
+          <textarea id="flag-note" name="flag_note" v-model="flagNote" class="form-control" rows="3" maxlength="100" placeholder="The AMO will see this note."></textarea>
+<div class="form-text text-end" :class="{ 'text-danger': (flagNote || '').length >= 100 }">{{ (flagNote || '').length }} / 100</div>
         </div>
         <div class="modal-footer">
           <button class="btn btn-secondary" @click="flagTarget = null">Cancel</button>
@@ -250,8 +250,8 @@ onMounted(refresh)
         <div class="modal-body">
           <p class="small text-muted mb-2">The request is closed as Rejected and the instructor is notified with your reason.</p>
           <label for="reject-reason" class="form-label">Reason</label>
-          <textarea id="reject-reason" name="reject_reason" v-model="rejectReason" class="form-control" rows="3" maxlength="500" placeholder="Tell the instructor why."></textarea>
-<div class="form-text text-end" :class="{ 'text-danger': (rejectReason || '').length >= 500 }">{{ (rejectReason || '').length }} / 500</div>
+          <textarea id="reject-reason" name="reject_reason" v-model="rejectReason" class="form-control" rows="3" maxlength="100" placeholder="Tell the instructor why."></textarea>
+<div class="form-text text-end" :class="{ 'text-danger': (rejectReason || '').length >= 100 }">{{ (rejectReason || '').length }} / 100</div>
         </div>
         <div class="modal-footer">
           <button class="btn btn-secondary" @click="rejectTarget = null">Cancel</button>
@@ -269,8 +269,8 @@ onMounted(refresh)
         <div class="modal-body">
           <p class="mb-2">Forward request #{{ confirmTarget.id }} to Inventory Management?</p>
           <label for="forward-note" class="form-label small mb-1">Note for the AMO (optional)</label>
-          <textarea id="forward-note" name="forward_note" v-model="forwardNote" class="form-control" rows="2" maxlength="500" placeholder="e.g. Needed for the lab activity on Friday."></textarea>
-<div class="form-text text-end" :class="{ 'text-danger': (forwardNote || '').length >= 500 }">{{ (forwardNote || '').length }} / 500</div>
+          <textarea id="forward-note" name="forward_note" v-model="forwardNote" class="form-control" rows="2" maxlength="100" placeholder="e.g. Needed for the lab activity on Friday."></textarea>
+<div class="form-text text-end" :class="{ 'text-danger': (forwardNote || '').length >= 100 }">{{ (forwardNote || '').length }} / 100</div>
         </div>
         <div class="modal-footer">
           <button class="btn btn-secondary" @click="confirmTarget = null">Cancel</button>

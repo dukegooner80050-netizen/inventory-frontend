@@ -111,11 +111,11 @@ async function submit() {
             <textarea
               class="form-control"
               rows="2"
-              maxlength="255"
+              maxlength="100"
               v-model="notes"
               placeholder="What happened? e.g. not found during inventory count"
             ></textarea>
-<div class="form-text text-end" :class="{ 'text-danger': (notes || '').length >= 255 }">{{ (notes || '').length }} / 255</div>
+<div class="form-text text-end" :class="{ 'text-danger': (notes || '').length >= 100 }">{{ (notes || '').length }} / 100</div>
           </div>
         </template>
 

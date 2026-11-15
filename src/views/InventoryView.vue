@@ -834,11 +834,11 @@ function formatDate(date) {
             id="disp-notes"
             v-model="disposeForm.notes"
             rows="2"
-            maxlength="255"
+            maxlength="100"
             class="form-control"
             placeholder="e.g. Beyond repair, hauled away by the junk dealer"
           ></textarea>
-<div class="form-text text-end" :class="{ 'text-danger': (disposeForm.notes || '').length >= 255 }">{{ (disposeForm.notes || '').length }} / 255</div>
+<div class="form-text text-end" :class="{ 'text-danger': (disposeForm.notes || '').length >= 100 }">{{ (disposeForm.notes || '').length }} / 100</div>
 
           <div v-if="disposeError" class="alert alert-danger py-2 mt-3 mb-0">
             {{ disposeError }}

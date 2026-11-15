@@ -1502,12 +1502,12 @@ watch(activeTab, async () => {
 
         <div class="mb-3">
           <label for="rq-request-purpose" class="form-label">Purpose</label>
-          <textarea maxlength="500"
+          <textarea maxlength="100"
             v-model="requestPurpose"
             class="form-control"
             rows="3"
             placeholder="Enter purpose of request..." id="rq-request-purpose" name="request-purpose"></textarea>
-<div class="form-text text-end" :class="{ 'text-danger': (requestPurpose || '').length >= 500 }">{{ (requestPurpose || '').length }} / 500</div>
+<div class="form-text text-end" :class="{ 'text-danger': (requestPurpose || '').length >= 100 }">{{ (requestPurpose || '').length }} / 100</div>
         </div>
 
         <div v-if="userRole === 'instructor'" class="mb-3">

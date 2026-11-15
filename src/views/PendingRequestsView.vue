@@ -762,10 +762,10 @@ function statusBadgeClass(status) {
         v-model="cancelReason"
         class="form-control"
         rows="3"
-        maxlength="255"
+        maxlength="100"
         placeholder="e.g. Student did not pick it up"
       ></textarea>
-<div class="form-text text-end" :class="{ 'text-danger': (cancelReason || '').length >= 255 }">{{ (cancelReason || '').length }} / 255</div>
+<div class="form-text text-end" :class="{ 'text-danger': (cancelReason || '').length >= 100 }">{{ (cancelReason || '').length }} / 100</div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary text-white" @click="cancelModal = false">Back</button>
@@ -788,13 +788,13 @@ function statusBadgeClass(status) {
         The reason is saved on the request and the instructor is notified.
       </p>
       <label class="form-label">Reason</label>
-      <textarea maxlength="500"
+      <textarea maxlength="100"
         v-model="takeoverReason"
         class="form-control"
         rows="3"
         placeholder="e.g. Department head is on leave"
       ></textarea>
-<div class="form-text text-end" :class="{ 'text-danger': (takeoverReason || '').length >= 500 }">{{ (takeoverReason || '').length }} / 500</div>
+<div class="form-text text-end" :class="{ 'text-danger': (takeoverReason || '').length >= 100 }">{{ (takeoverReason || '').length }} / 100</div>
     </div>
 
     <div class="modal-footer">
@@ -815,13 +815,13 @@ function statusBadgeClass(status) {
 
     <div class="modal-body">
       <label class="form-label">Reason for rejection</label>
-      <textarea maxlength="500"
+      <textarea maxlength="100"
         v-model="rejectReason"
         class="form-control"
         rows="4"
         placeholder="Enter reason..."
       ></textarea>
-<div class="form-text text-end" :class="{ 'text-danger': (rejectReason || '').length >= 500 }">{{ (rejectReason || '').length }} / 500</div>
+<div class="form-text text-end" :class="{ 'text-danger': (rejectReason || '').length >= 100 }">{{ (rejectReason || '').length }} / 100</div>
     </div>
 
     <div class="modal-footer">
@@ -928,10 +928,10 @@ function statusBadgeClass(status) {
           v-model="approvalRemarks"
           class="form-control"
           rows="3"
-          maxlength="500"
+          maxlength="100"
           placeholder="Request Approved but won't be released yet."
         ></textarea>
-<div class="form-text text-end" :class="{ 'text-danger': (approvalRemarks || '').length >= 500 }">{{ (approvalRemarks || '').length }} / 500</div>
+<div class="form-text text-end" :class="{ 'text-danger': (approvalRemarks || '').length >= 100 }">{{ (approvalRemarks || '').length }} / 100</div>
         <div class="form-text">The requester will see this with the approval.</div>
       </div>
     </div>

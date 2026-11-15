@@ -323,11 +323,11 @@ async function confirmDismiss() {
                 <textarea
                   class="form-control"
                   rows="3"
-                  maxlength="500"
+                  maxlength="100"
                   v-model="form.description"
                   placeholder="e.g. Aircon is not cooling and leaks water"
                 ></textarea>
-<div class="form-text text-end" :class="{ 'text-danger': (form.description || '').length >= 500 }">{{ (form.description || '').length }} / 500</div>
+<div class="form-text text-end" :class="{ 'text-danger': (form.description || '').length >= 100 }">{{ (form.description || '').length }} / 100</div>
               </div>
 
               <div v-if="formError" class="alert alert-danger py-2">
@@ -478,11 +478,11 @@ async function confirmDismiss() {
           <textarea
             class="form-control"
             rows="2"
-            maxlength="255"
+            maxlength="100"
             v-model="dismissNotes"
             placeholder="e.g. Checked: the equipment is working"
           ></textarea>
-<div class="form-text text-end" :class="{ 'text-danger': (dismissNotes || '').length >= 255 }">{{ (dismissNotes || '').length }} / 255</div>
+<div class="form-text text-end" :class="{ 'text-danger': (dismissNotes || '').length >= 100 }">{{ (dismissNotes || '').length }} / 100</div>
           <div v-if="dismissError" class="alert alert-danger py-2 mt-3 mb-0">
             {{ dismissError }}
           </div>

@@ -327,6 +327,7 @@ async function confirmDismiss() {
                   v-model="form.description"
                   placeholder="e.g. Aircon is not cooling and leaks water"
                 ></textarea>
+<div class="form-text text-end" :class="{ 'text-danger': (form.description || '').length >= 500 }">{{ (form.description || '').length }} / 500</div>
               </div>
 
               <div v-if="formError" class="alert alert-danger py-2">
@@ -481,6 +482,7 @@ async function confirmDismiss() {
             v-model="dismissNotes"
             placeholder="e.g. Checked: the equipment is working"
           ></textarea>
+<div class="form-text text-end" :class="{ 'text-danger': (dismissNotes || '').length >= 255 }">{{ (dismissNotes || '').length }} / 255</div>
           <div v-if="dismissError" class="alert alert-danger py-2 mt-3 mb-0">
             {{ dismissError }}
           </div>

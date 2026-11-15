@@ -333,6 +333,7 @@ async function confirmResolve() {
                 : 'e.g. Beyond repair, parts no longer available'
             "
           ></textarea>
+<div class="form-text text-end" :class="{ 'text-danger': (notes || '').length >= 255 }">{{ (notes || '').length }} / 255</div>
 
           <div class="alert alert-light border small mt-3 mb-0">
             <template v-if="outcome === 'repaired'">{{ destinationText(target) }}.</template>

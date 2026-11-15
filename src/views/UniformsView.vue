@@ -1102,7 +1102,8 @@ const visibleTypes = computed(() => {
 
           <label for="un-type-description" class="form-label"> Description </label>
 
-          <textarea class="form-control" rows="3" v-model="typeDescription" placeholder="Enter uniform description" id="un-type-description" name="type-description"></textarea>
+          <textarea maxlength="255" class="form-control" rows="3" v-model="typeDescription" placeholder="Enter uniform description" id="un-type-description" name="type-description"></textarea>
+<div class="form-text text-end" :class="{ 'text-danger': (typeDescription || '').length >= 255 }">{{ (typeDescription || '').length }} / 255</div>
 
           <label for="un-type-course" class="form-label mt-3"> Course </label>
           <select class="form-select" v-model="typeDepartmentId" id="un-type-course" name="type-course" :disabled="!isAllView">
@@ -1368,6 +1369,7 @@ const visibleTypes = computed(() => {
 
             <label for="un-edit-type-description" class="form-label"> Description </label>
             <textarea class="form-control" rows="3" maxlength="255" v-model="editTypeDescription" id="un-edit-type-description" name="edit-type-description"></textarea>
+<div class="form-text text-end" :class="{ 'text-danger': (editTypeDescription || '').length >= 255 }">{{ (editTypeDescription || '').length }} / 255</div>
           </template>
 
           <!-- TYPE CONFIRMATION -->

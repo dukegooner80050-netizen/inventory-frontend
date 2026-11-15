@@ -115,6 +115,7 @@ async function submit() {
               v-model="notes"
               placeholder="What happened? e.g. not found during inventory count"
             ></textarea>
+<div class="form-text text-end" :class="{ 'text-danger': (notes || '').length >= 255 }">{{ (notes || '').length }} / 255</div>
           </div>
         </template>
 

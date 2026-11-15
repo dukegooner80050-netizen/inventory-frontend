@@ -1494,16 +1494,20 @@ watch(activeTab, async () => {
               placeholder="Specify the room or place"
               aria-label="Specify the room or place"
             />
+            <div class="form-text text-end" :class="{ 'text-danger': roomOther.length >= 200 }">
+              {{ roomOther.length }} / 200
+            </div>
           </div>
         </div>
 
         <div class="mb-3">
           <label for="rq-request-purpose" class="form-label">Purpose</label>
-          <textarea
+          <textarea maxlength="500"
             v-model="requestPurpose"
             class="form-control"
             rows="3"
             placeholder="Enter purpose of request..." id="rq-request-purpose" name="request-purpose"></textarea>
+<div class="form-text text-end" :class="{ 'text-danger': (requestPurpose || '').length >= 500 }">{{ (requestPurpose || '').length }} / 500</div>
         </div>
 
         <div v-if="userRole === 'instructor'" class="mb-3">

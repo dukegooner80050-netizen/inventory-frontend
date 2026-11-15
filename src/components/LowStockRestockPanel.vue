@@ -267,6 +267,7 @@ onMounted(load);
             maxlength="255"
             v-model="dialogNotes"
           ></textarea>
+<div class="form-text text-end" :class="{ 'text-danger': (dialogNotes || '').length >= 255 }">{{ (dialogNotes || '').length }} / 255</div>
         </template>
         <div v-if="dialogError" class="alert alert-danger py-2 mt-3 mb-0">
           {{ dialogError }}

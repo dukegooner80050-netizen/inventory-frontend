@@ -3,8 +3,8 @@ import { ref, reactive, computed, onMounted, watch } from "vue";
 import { useRoute } from "vue-router";
 import {
   getMonthlyRequestLimit,
-  getMaxItemsPerRequest,
-  updateMaxItemsPerRequest,
+  getMaxItems,
+  updateMaxItemsByRole,
   updateMonthlyRequestLimit,
   getReturnPeriods,
   updateReturnPeriods,
@@ -178,8 +178,9 @@ async function loadGeneral() {
     sidMax.value = await getStudentIdMaxLength();
     sidNew.value = sidMax.value;
 
-    miMax.value = await getMaxItemsPerRequest();
-    miNew.value = miMax.value;
+    const mi = await getMaxItems();
+    Object.assign(miSaved, mi.by_role);
+    Object.assign(miNew, mi.by_role);
 
     const levels = await getStockLevels();
     Object.assign(slEquipment, levels.school_equipment);
@@ -399,20 +400,30 @@ async function saveSid() {
   }
 }
 
-// Maximum different items per request (General tab)
-const miMax = ref(10);
-const miNew = ref(10);
+// Maximum different items per request, per role (General tab)
+const MI_ROLES = [
+  ["department_head", "Department Head"],
+  ["admin", "Admin"],
+  ["instructor", "Instructor"],
+  ["cashier", "Cashier"],
+];
+const miSaved = reactive({ department_head: 10, admin: 10, instructor: 10, cashier: 10 });
+const miNew = reactive({ department_head: 10, admin: 10, instructor: 10, cashier: 10 });
 const miSaving = ref(false);
+const miChanged = computed(() => MI_ROLES.some(([k]) => Number(miNew[k]) !== Number(miSaved[k])));
 async function saveMi() {
-  const n = Number(miNew.value);
-  if (!Number.isInteger(n) || n < 1 || n > 50) {
-    notify("danger", "Enter a whole number from 1 to 50.");
-    return;
+  for (const [k, label] of MI_ROLES) {
+    const n = Number(miNew[k]);
+    if (!Number.isInteger(n) || n < 1 || n > 50) {
+      notify("danger", `${label}: enter a whole number from 1 to 50.`);
+      return;
+    }
   }
   miSaving.value = true;
   try {
-    const res = await updateMaxItemsPerRequest(n);
-    miMax.value = res.max_items_per_request;
+    const res = await updateMaxItemsByRole({ ...miNew });
+    Object.assign(miSaved, res.by_role);
+    Object.assign(miNew, res.by_role);
     notify("success", "Maximum items per request saved.");
   } catch (e) {
     notify("danger", getErrorMessage(e));
@@ -756,22 +767,26 @@ onMounted(async () => {
         <div class="card-body">
           <h6 class="mb-2">Maximum Items per Request</h6>
           <p class="text-muted small">
-            Most different items one request can hold (uniform lines are not
-            counted; the AMO is exempt). Currently:
-            <strong>{{ miMax }}</strong> items.
+            Most different items one request can hold, set for each role
+            (uniform lines are not counted; the AMO is exempt).
           </p>
-          <div class="input-group">
-            <input
-              id="st-max-items"
-              name="max_items_per_request"
-              type="number"
-              min="1"
-              max="50"
-              class="form-control"
-              v-model.number="miNew"
-              :disabled="miSaving"
-            />
-            <button class="btn btn-primary" :disabled="miSaving || miNew === miMax" @click="saveMi">
+          <div class="row g-2 align-items-end">
+            <div v-for="[key, label] in MI_ROLES" :key="key" class="col-6 col-md-3">
+              <label class="form-label small mb-1" :for="'st-max-items-' + key">{{ label }}</label>
+              <input
+                :id="'st-max-items-' + key"
+                :name="'max_items_' + key"
+                type="number"
+                min="1"
+                max="50"
+                class="form-control"
+                v-model.number="miNew[key]"
+                :disabled="miSaving"
+              />
+            </div>
+          </div>
+          <div class="text-end mt-3">
+            <button class="btn btn-primary" :disabled="miSaving || !miChanged" @click="saveMi">
               Save
             </button>
           </div>

@@ -9,18 +9,18 @@ export async function updateStudentIdMaxLength(value) {
     return (await axios.put("/settings/student-id-length", { student_id_max_length: value })).data;
 }
 
-// Most different items one request may hold, per role. Everyone can read it; AMO sets it.
-// Returns { max_items_per_request (my role), by_role: { department_head, admin, instructor, cashier } }.
-export async function getMaxItems() {
-    return (await axios.get("/settings/max-items", { silent: true })).data;
-}
-
+// My own items-per-request limit (the Request page uses it).
 export async function getMaxItemsPerRequest() {
-    return (await getMaxItems()).max_items_per_request;
+    return (await axios.get("/settings/max-items", { silent: true })).data.max_items_per_request;
 }
 
-export async function updateMaxItemsByRole(byRole) {
-    return (await axios.put("/settings/max-items", { by_role: byRole })).data;
+// AMO: both limits for every role -> { by_role: { admin: { items, monthly }, ... } }
+export async function getRequestLimits() {
+    return (await axios.get("/settings/request-limits")).data;
+}
+
+export async function updateRequestLimits(byRole) {
+    return (await axios.put("/settings/request-limits", { by_role: byRole })).data;
 }
 
 export async function getMonthlyRequestLimit() {
@@ -38,14 +38,6 @@ export async function updateReturnPeriods({ office_supplies, school_equipment })
         await axios.put("/settings/return-periods", {
             office_supplies,
             school_equipment,
-        })
-    ).data;
-}
-
-export async function updateMonthlyRequestLimit(limit) {
-    return (
-        await axios.put("/settings/monthly-request-limit", {
-            monthly_request_limit: limit,
         })
     ).data;
 }

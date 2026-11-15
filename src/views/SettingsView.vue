@@ -2,10 +2,8 @@
 import { ref, reactive, computed, onMounted, watch } from "vue";
 import { useRoute } from "vue-router";
 import {
-  getMonthlyRequestLimit,
-  getMaxItems,
-  updateMaxItemsByRole,
-  updateMonthlyRequestLimit,
+  getRequestLimits,
+  updateRequestLimits,
   getReturnPeriods,
   updateReturnPeriods,
   getStockLevels,
@@ -72,10 +70,6 @@ function chooseTheme(value) {
 
 /*  STATE  */
 const loading = ref(true);
-const saving = ref(false);
-const currentLimit = ref(null);
-const newLimit = ref(5);
-const showConfirm = ref(false);
 
 // Default return periods (days) for borrowed items; blank = no default.
 const rpOffice = ref("");
@@ -170,17 +164,14 @@ async function loadGeneral() {
   loading.value = true;
 
   try {
-    const res = await getMonthlyRequestLimit();
-
-    currentLimit.value = res.monthly_request_limit;
-    newLimit.value = res.monthly_request_limit;
-
     sidMax.value = await getStudentIdMaxLength();
     sidNew.value = sidMax.value;
 
-    const mi = await getMaxItems();
-    Object.assign(miSaved, mi.by_role);
-    Object.assign(miNew, mi.by_role);
+    const lim = await getRequestLimits();
+    for (const k of Object.keys(lim.by_role)) {
+      Object.assign(rlSaved[k], lim.by_role[k]);
+      Object.assign(rlNew[k], lim.by_role[k]);
+    }
 
     const levels = await getStockLevels();
     Object.assign(slEquipment, levels.school_equipment);
@@ -196,49 +187,6 @@ async function loadGeneral() {
   }
 }
 
-/*  ACTIONS  */
-function openConfirm() {
-  if (!canEditLimit.value) return;
-
-  if (!newLimit.value || newLimit.value < 1) {
-    notify("warning", "Limit must be at least 1.");
-    return;
-  }
-
-  if (Number(newLimit.value) === Number(currentLimit.value)) {
-    notify("info", "The monthly request limit is already set to this value.");
-    return;
-  }
-
-  showConfirm.value = true;
-}
-
-function closeConfirm() {
-  if (saving.value) return;
-  showConfirm.value = false;
-}
-
-async function confirmSave() {
-  if (!newLimit.value || newLimit.value < 1) {
-    showConfirm.value = false;
-    notify("warning", "Limit must be at least 1.");
-    return;
-  }
-
-  saving.value = true;
-
-  try {
-    const res = await updateMonthlyRequestLimit(newLimit.value);
-    currentLimit.value = res.monthly_request_limit;
-    showConfirm.value = false;
-    notify("success", "Monthly request limit updated successfully.");
-  } catch (e) {
-    showConfirm.value = false;
-    notify("danger", getErrorMessage(e));
-  } finally {
-    saving.value = false;
-  }
-}
 
 /* ============================================================
  * ACCOUNT REQUESTS TAB -- people who signed up, waiting approval
@@ -400,35 +348,44 @@ async function saveSid() {
   }
 }
 
-// Maximum different items per request, per role (General tab)
-const MI_ROLES = [
+// Request limits per role (General tab): items per request + requests per month
+const RL_ROLES = [
   ["department_head", "Department Head"],
   ["admin", "Admin"],
   ["instructor", "Instructor"],
   ["cashier", "Cashier"],
 ];
-const miSaved = reactive({ department_head: 10, admin: 10, instructor: 10, cashier: 10 });
-const miNew = reactive({ department_head: 10, admin: 10, instructor: 10, cashier: 10 });
-const miSaving = ref(false);
-const miChanged = computed(() => MI_ROLES.some(([k]) => Number(miNew[k]) !== Number(miSaved[k])));
-async function saveMi() {
-  for (const [k, label] of MI_ROLES) {
-    const n = Number(miNew[k]);
-    if (!Number.isInteger(n) || n < 1 || n > 50) {
-      notify("danger", `${label}: enter a whole number from 1 to 50.`);
+const rlBlank = () => Object.fromEntries(RL_ROLES.map(([k]) => [k, { items: 10, monthly: 5 }]));
+const rlSaved = reactive(rlBlank());
+const rlNew = reactive(rlBlank());
+const rlSaving = ref(false);
+const rlChanged = computed(() =>
+  RL_ROLES.some(([k]) => Number(rlNew[k].items) !== Number(rlSaved[k].items) || Number(rlNew[k].monthly) !== Number(rlSaved[k].monthly)),
+);
+async function saveRl() {
+  for (const [k, label] of RL_ROLES) {
+    const i = Number(rlNew[k].items), m = Number(rlNew[k].monthly);
+    if (!Number.isInteger(i) || i < 1 || i > 50) {
+      notify("danger", `${label}: items per request must be a whole number from 1 to 50.`);
+      return;
+    }
+    if (!Number.isInteger(m) || m < 1 || m > 999) {
+      notify("danger", `${label}: requests per month must be a whole number from 1 to 999.`);
       return;
     }
   }
-  miSaving.value = true;
+  rlSaving.value = true;
   try {
-    const res = await updateMaxItemsByRole({ ...miNew });
-    Object.assign(miSaved, res.by_role);
-    Object.assign(miNew, res.by_role);
-    notify("success", "Maximum items per request saved.");
+    const res = await updateRequestLimits(JSON.parse(JSON.stringify(rlNew)));
+    for (const k of Object.keys(res.by_role)) {
+      Object.assign(rlSaved[k], res.by_role[k]);
+      Object.assign(rlNew[k], res.by_role[k]);
+    }
+    notify("success", "Request limits saved.");
   } catch (e) {
     notify("danger", getErrorMessage(e));
   } finally {
-    miSaving.value = false;
+    rlSaving.value = false;
   }
 }
 
@@ -765,28 +722,53 @@ onMounted(async () => {
       <div class="col-12">
       <div v-if="canEditLimit && !loading" class="card shadow-sm mb-3">
         <div class="card-body">
-          <h6 class="mb-2">Maximum Items per Request</h6>
+          <h6 class="mb-2">Request Limits by Role</h6>
           <p class="text-muted small">
-            Most different items one request can hold, set for each role
-            (uniform lines are not counted; the AMO is exempt).
+            How much each role can request. <strong>Items per request</strong> is the
+            most different items one request can hold (uniform lines are not counted).
+            <strong>Requests per month</strong> is how many requests a person can submit
+            per calendar month (cashier uniform requests are not counted). The AMO has no limits.
           </p>
-          <div class="row g-2 align-items-end">
-            <div v-for="[key, label] in MI_ROLES" :key="key" class="col-6 col-md-3">
-              <label class="form-label small mb-1" :for="'st-max-items-' + key">{{ label }}</label>
-              <input
-                :id="'st-max-items-' + key"
-                :name="'max_items_' + key"
-                type="number"
-                min="1"
-                max="50"
-                class="form-control"
-                v-model.number="miNew[key]"
-                :disabled="miSaving"
-              />
-            </div>
+          <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Role</th>
+                  <th style="width: 160px">Items per request</th>
+                  <th style="width: 160px">Requests per month</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="[key, label] in RL_ROLES" :key="key">
+                  <td>{{ label }}</td>
+                  <td>
+                    <input
+                      :id="'st-rl-items-' + key"
+                      :name="'items_' + key"
+                      :aria-label="label + ' items per request'"
+                      type="number" min="1" max="50"
+                      class="form-control form-control-sm"
+                      v-model.number="rlNew[key].items"
+                      :disabled="rlSaving"
+                    />
+                  </td>
+                  <td>
+                    <input
+                      :id="'st-rl-monthly-' + key"
+                      :name="'monthly_' + key"
+                      :aria-label="label + ' requests per month'"
+                      type="number" min="1" max="999"
+                      class="form-control form-control-sm"
+                      v-model.number="rlNew[key].monthly"
+                      :disabled="rlSaving"
+                    />
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
           <div class="text-end mt-3">
-            <button class="btn btn-primary" :disabled="miSaving || !miChanged" @click="saveMi">
+            <button class="btn btn-primary" :disabled="rlSaving || !rlChanged" @click="saveRl">
               Save
             </button>
           </div>
@@ -821,37 +803,6 @@ onMounted(async () => {
         </div>
       </div>
 
-      <div v-if="canEditLimit && loading" class="text-center text-muted py-4">
-        Loading...
-      </div>
-
-      <div v-else-if="canEditLimit" class="card shadow-sm mb-3">
-        <div class="card-body">
-
-          <h6 class="mb-2">Monthly Request Limit</h6>
-
-          <p class="text-muted small">
-            Maximum number of requests anyone except the AMO can submit
-            per calendar month. Currently:
-            <strong>{{ currentLimit }}</strong> per month.
-          </p>
-
-          <div class="input-group">
-            <input
-              type="number"
-              min="1"
-              class="form-control"
-              v-model.number="newLimit"
-              :disabled="saving"
-            />
-
-            <button class="btn btn-primary" :disabled="saving" @click="openConfirm">
-              Save
-            </button>
-          </div>
-
-        </div>
-      </div>
 
       </div>
       <div class="col-12">
@@ -1184,74 +1135,6 @@ onMounted(async () => {
       </div>
 
     </template>
-
-    <!-- ============================================================ -->
-    <!-- CONFIRMATION MODAL -- Monthly Request Limit -->
-    <!-- ============================================================ -->
-
-    <div
-      v-if="canEditLimit && showConfirm"
-      class="modal fade show d-block"
-      tabindex="-1"
-      style="background: rgba(0, 0, 0, 0.5);"
-    >
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-
-          <div class="modal-header">
-            <h5 class="modal-title">Confirm Change</h5>
-            <button
-              type="button"
-              class="btn-close"
-              @click="closeConfirm"
-              :disabled="saving"
-            ></button>
-          </div>
-
-          <div class="modal-body">
-            <p class="mb-3">
-              Are you sure you want to change the monthly request limit?
-            </p>
-
-            <div class="bg-light rounded p-3">
-              <div class="d-flex justify-content-between mb-2">
-                <span class="text-muted">Current limit</span>
-                <strong>{{ currentLimit }}</strong>
-              </div>
-              <div class="d-flex justify-content-between">
-                <span class="text-muted">New limit</span>
-                <strong>{{ newLimit }}</strong>
-              </div>
-            </div>
-
-            <p class="text-muted small mt-3 mb-0">
-              This setting applies system-wide to the monthly request
-              limit for everyone except the AMO.
-            </p>
-          </div>
-
-          <div class="modal-footer">
-            <button
-              type="button"
-              class="btn btn-secondary"
-              @click="closeConfirm"
-              :disabled="saving"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              class="btn btn-primary"
-              @click="confirmSave"
-              :disabled="saving"
-            >
-              {{ saving ? "Saving..." : "Confirm Change" }}
-            </button>
-          </div>
-
-        </div>
-      </div>
-    </div>
 
     <!-- ============================================================ -->
     <!-- CONFIRMATION MODAL -- Account Requests (approve / decline) -->

@@ -106,6 +106,7 @@ const selectedItemId = ref("");
 const qty = ref(1);
 const location = ref("");
 const room = ref("");
+const roomOther = ref(""); // where, when Room is "Others"
 const requestPurpose = ref("");
 // Instructors: skip the department head when they are away or there is none.
 const sendDirect = ref(false);
@@ -872,6 +873,10 @@ async function submitRequest(confirmed = false) {
     );
     return;
   }
+  if (!uniformOnly.value && room.value === "Others" && !roomOther.value.trim()) {
+    showWarning("Room Details Required", "You chose \"Others\" for the room. Please type where the items are needed.");
+    return;
+  }
   if (!uniformOnly.value && !room.value) {
     showWarning(
       "Room Required",
@@ -963,7 +968,11 @@ async function submitRequest(confirmed = false) {
 
   const payload = {
     location: uniformOnly.value ? AMO_OFFICE : location.value,
-    room: uniformOnly.value ? "N/A" : room.value,
+    room: uniformOnly.value
+      ? "N/A"
+      : room.value === "Others"
+        ? `Others: ${roomOther.value.trim()}`.slice(0, 255)
+        : room.value,
     purpose: requestPurpose.value.trim(),
     ...(userRole === "instructor" && sendDirect.value ? { send_direct: true, direct_reason: directReason.value } : {}),
     ...(normalUniforms.length > 0 ? { paid: studentPaid.value } : {}),
@@ -1024,6 +1033,7 @@ async function submitRequest(confirmed = false) {
     directReasonOther.value = "";
     location.value = "";
     room.value = "";
+    roomOther.value = "";
     category.value = "";
     itemType.value = "";
     selectedItemId.value = "";
@@ -1471,8 +1481,19 @@ watch(activeTab, async () => {
               <option>Room 201</option>
               <option>Room 202</option>
               <option>Room 203</option>
-              <option>N/A</option>
+              <option>Others</option>
             </select>
+            <input
+              v-if="room === 'Others'"
+              id="rq-room-other"
+              name="room_other"
+              v-model="roomOther"
+              type="text"
+              class="form-control mt-2"
+              maxlength="200"
+              placeholder="Specify the room or place"
+              aria-label="Specify the room or place"
+            />
           </div>
         </div>
 

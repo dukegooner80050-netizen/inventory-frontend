@@ -100,7 +100,7 @@ defineExpose({ load });
           </div>
           <div class="mt-3 d-flex flex-wrap gap-2">
             <button class="btn btn-sm btn-success" @click="open(r, 'reopen')">Accept &amp; reopen</button>
-            <button class="btn btn-sm btn-outline-danger" @click="open(r, 'uphold')">Keep rejected</button>
+            <button class="btn btn-sm btn-danger text-white" @click="open(r, 'uphold')">Keep rejected</button>
           </div>
         </div>
       </div>

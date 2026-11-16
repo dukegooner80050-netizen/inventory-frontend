@@ -2047,7 +2047,7 @@ watch(activeTab, async () => {
                   </div>
                 </div>
                 <div v-else class="d-flex flex-wrap gap-2 mt-2">
-                  <button v-if="canAppeal(selected)" class="btn btn-sm btn-outline-primary" @click="appealOpen = true">Appeal this decision</button>
+                  <button v-if="canAppeal(selected)" class="btn btn-sm btn-primary text-white" @click="appealOpen = true">Appeal this decision</button>
                   <button v-if="canRequestAgain(selected)" class="btn btn-sm btn-success" @click="requestAgain(selected)">Request again</button>
                   <span v-else-if="(selected.status || '').toLowerCase() === 'rejected'" class="small text-muted align-self-center">Request again already used.</span>
                 </div>

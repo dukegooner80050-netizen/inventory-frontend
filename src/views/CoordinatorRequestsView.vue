@@ -2,11 +2,20 @@
 import { ref, onMounted, watch } from 'vue'
 import axios from '../axios'
 import AlertMessage from '../components/AlertMessage.vue'
+import AppealsPanel from '../components/AppealsPanel.vue'
 
 /*  STATE  */
 const requests = ref([])
 const directRequests = ref([])
 const tab = ref('queue')
+const appealCount = ref(0)
+async function loadAppealCount() {
+  try {
+    appealCount.value = (await axios.get('/requests/appeals')).data.filter((a) => !a.appealDecision).length
+  } catch {
+    appealCount.value = 0
+  }
+}
 const loading = ref(false)
 const busyId = ref(null)
 const showAlert = ref(false)
@@ -97,7 +106,7 @@ function summary(r) {
   const names = [...(r.items || []).map(i => `${i.itemName} × ${i.qty}`), ...(r.uniforms || []).map(u => `${u.uniformName || 'Uniform'} (${u.size || 'size n/a'}) × ${u.quantity}`)]
   return names.length ? names.join(', ') : 'No line items found'
 }
-onMounted(refresh)
+onMounted(() => { refresh(); loadAppealCount() })
 </script>
 
 <template>
@@ -113,9 +122,11 @@ onMounted(refresh)
       <button class="nav-link" :class="{ active: tab === 'queue' }" @click="tab = 'queue'">Waiting for review ({{ requests.length }})</button>
       <button class="nav-link" :class="{ active: tab === 'direct' }" @click="tab = 'direct'">Sent directly to AMO ({{ unreviewedCount() }} to review)</button>
       <button class="nav-link" :class="{ active: tab === 'history' }" @click="tab = 'history'">History</button>
+      <button class="nav-link" :class="{ active: tab === 'appeals' }" @click="tab = 'appeals'">Appeals<span v-if="appealCount" class="badge bg-danger ms-1">{{ appealCount }}</span></button>
     </div>
+    <AppealsPanel v-if="tab === 'appeals'" @changed="loadAppealCount(); refresh()" />
 
-    <template v-if="tab === 'history'">
+    <template v-else-if="tab === 'history'">
       <div v-if="!hist.scopedToDepartment" class="alert alert-warning py-2 small">
         Your account has no department set, so every instructor is shown. Ask the AMO to set your department (Settings → Account Management) to see only your department's instructors.
       </div>

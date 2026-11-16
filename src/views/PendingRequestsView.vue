@@ -1,6 +1,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted, watch } from "vue";
-import { getRequests, approveRequest, rejectRequest, takeOverRequest, releaseRequest, cancelApprovedRequest } from "../services/requests";
+import { getRequests, approveRequest, rejectRequest, takeOverRequest, releaseRequest, cancelApprovedRequest, getAppeals } from "../services/requests";
+import AppealsPanel from "../components/AppealsPanel.vue";
 import { getCurrentUser } from "../services/storage";
 import { requireAdmin } from "../services/session";
 import AlertMessage from "../components/AlertMessage.vue";
@@ -29,7 +30,16 @@ const userFilter = ref("");
 const expandedId = ref(null);
 
 /* Approval and release are separate actions, so they get separate tabs. */
-const activeTab = ref("pending"); // "pending" | "release" | "all"
+const activeTab = ref("pending"); // "pending" | "release" | "coordinator" | "appeals" | "all"
+const appealCount = ref(0); // appeals waiting for an answer
+async function loadAppealCount() {
+  try {
+    appealCount.value = (await getAppeals()).filter((a) => !a.appealDecision).length;
+  } catch {
+    appealCount.value = 0;
+  }
+}
+onMounted(loadAppealCount);
 
 /* On the All tab, action buttons sit behind a toggle (keyed by request id); other tabs show them. */
 const actionsOpen = reactive({});
@@ -470,6 +480,15 @@ function statusBadgeClass(status) {
       <button
         type="button"
         class="nav-link"
+        :class="{ active: activeTab === 'appeals' }"
+        @click="activeTab = 'appeals'; expandedId = null"
+      >
+        Appeals
+        <span v-if="appealCount" class="badge bg-danger ms-1">{{ appealCount }}</span>
+      </button>
+      <button
+        type="button"
+        class="nav-link"
         :class="{ active: activeTab === 'all' }"
         @click="activeTab = 'all'; expandedId = null"
       >
@@ -477,7 +496,9 @@ function statusBadgeClass(status) {
       </button>
     </div>
 
-    <div class="card shadow-sm">
+    <AppealsPanel v-if="activeTab === 'appeals'" @changed="loadAppealCount(); refresh()" />
+
+    <div v-else class="card shadow-sm">
       <div class="card-body table-scroll">
         <table class="table table-hover align-middle mb-0">
           <thead class="table-light">

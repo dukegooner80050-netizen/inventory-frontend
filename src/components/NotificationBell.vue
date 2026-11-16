@@ -218,6 +218,7 @@ function openNote(n) {
   else if (t === "coordinator_review" || t === "direct_review") to = "/coordinator-requests";
   else if (t === "coordinator_flag") to = "/pending-requests";
   else if (t === "return_reported") to = "/dashboard";
+  else if (t === "appeal") to = String(getCurrentUser()?.role || "").toLowerCase() === "amo" ? "/pending-requests" : "/coordinator-requests";
   closePanel();
   if (to === "/request") {
     router.push({ path: "/request", query: n.idrequest ? { tab: "mine", open: n.idrequest } : { tab: "mine" } });
@@ -243,6 +244,8 @@ function noteLabel(n) {
   if (n.event_type === "return_reported") return "Return";
   if (n.event_type === "return_confirmed") return "Confirmed";
   if (n.event_type === "return_rejected") return "Not received";
+  if (n.event_type === "appeal") return "Appeal";
+  if (n.event_type === "appeal_decision") return "Appeal reply";
   if (/rejected/i.test(n.message || "")) return "Rejected";
   if (/approved/i.test(n.message || "")) return "Approved";
   return "Update";

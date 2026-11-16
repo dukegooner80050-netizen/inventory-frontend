@@ -109,3 +109,16 @@ export async function returnEquipment(
 
     return response.data;
 }
+// Appeals on rejected requests.
+export async function appealRequest(id, message) {
+    return (await axios.post(`/requests/${id}/appeal`, { message })).data;
+}
+
+// AMO: every appeal. Program head: appeals on requests they rejected.
+export async function getAppeals() {
+    return (await axios.get("/requests/appeals")).data;
+}
+
+export async function decideAppeal(id, decision, reply) {
+    return (await axios.put(`/requests/${id}/appeal-decision`, { decision, reply })).data;
+}

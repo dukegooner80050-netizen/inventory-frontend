@@ -2,7 +2,7 @@
 import { printBorrowerForm, hasBorrowedItems } from "../services/borrowerForm";
 import { ref, watch, computed, onMounted, nextTick } from "vue";
 import { useRoute } from "vue-router";
-import { createRequestBatch, getRequests, confirmReceived } from "../services/requests";
+import { createRequestBatch, getRequests, confirmReceived, appealRequest } from "../services/requests";
 import { fulfilmentState } from "../services/requestState";
 import {
   listUniformTypes,
@@ -630,6 +630,13 @@ async function loadMyRequests() {
         room: request.room,
         purpose: request.purpose,
         rejectReason: request.rejectReason,
+        notifiedAt: request.notifiedAt,
+        rejectedByHead: !!request.rejectedByHead,
+        appealMessage: request.appealMessage || "",
+        appealedAt: request.appealedAt || null,
+        appealDecision: request.appealDecision || "",
+        appealReply: request.appealReply || "",
+        appealDecidedAt: request.appealDecidedAt || null,
         approvalRemarks: request.approvalRemarks,
 
         items: (request.items || []).map((item) => ({
@@ -681,6 +688,90 @@ async function mixConflictDiscard() {
   requestItems.value = [];
   requestUniforms.value = [];
   await addToList();
+}
+
+/* ---- Rejected requests: appeal once, or start a new request from it ---- */
+
+const APPEAL_DAYS = 7;
+const appealOpen = ref(false);
+const appealText = ref("");
+const appealBusy = ref(false);
+const againFrom = ref(null); // { id, reason } while the form was filled from a rejected request
+
+watch(selected, () => {
+  appealOpen.value = false;
+  appealText.value = "";
+});
+
+function canAppeal(r) {
+  if (!r || (r.status || "").toLowerCase() !== "rejected" || r.appealedAt) return false;
+  const since = r.notifiedAt || r.request_date;
+  if (!since) return true;
+  return Date.now() < new Date(since).getTime() + APPEAL_DAYS * 86400000;
+}
+
+async function sendAppeal() {
+  const text = appealText.value.trim();
+  if (text.length < 3) {
+    showWarning("Appeal", "Please write a short message (at least 3 characters).");
+    return;
+  }
+  appealBusy.value = true;
+  try {
+    const res = await appealRequest(selected.value.id, text);
+    appealOpen.value = false;
+    appealText.value = "";
+    await loadMyRequests();
+    showWarning("Appeal sent", res.message);
+  } catch (e) {
+    showWarning("Appeal not sent", e.response?.data?.message || "Something went wrong. Please try again.");
+  } finally {
+    appealBusy.value = false;
+  }
+}
+
+/* Fills the request form from a rejected request. Quantities are checked again when you submit. */
+function requestAgain(r) {
+  const skipped = [];
+  requestItems.value = [];
+  requestUniforms.value = [];
+  const cap = maxItems.value;
+  for (const line of r.items || []) {
+    const inv = invItems.value.find((i) => String(i.id) === String(line.itemId));
+    if (!inv) {
+      skipped.push(line.itemName);
+      continue;
+    }
+    if (cap !== null && requestItems.value.length >= cap) {
+      skipped.push(line.itemName);
+      continue;
+    }
+    requestItems.value.push({
+      itemId: line.itemId,
+      itemName: line.itemName,
+      category: line.category,
+      itemType: line.itemType,
+      qty: line.qty,
+    });
+  }
+  requestPurpose.value = r.purpose || "";
+  location.value = r.location || "";
+  if ((r.room || "").startsWith("Others: ")) {
+    room.value = "Others";
+    roomOther.value = r.room.slice(8);
+  } else {
+    room.value = r.room || "";
+    roomOther.value = "";
+  }
+  againFrom.value = {
+    id: r.id,
+    reason: r.rejectReason || "",
+    notes: [
+      (r.uniforms || []).length ? "Uniform lines are not copied; add them again." : "",
+      skipped.length ? `Not copied (unavailable or over your limit): ${skipped.join(", ")}.` : "",
+    ].filter(Boolean).join(" "),
+  };
+  activeTab.value = "create";
 }
 
 /*  ACTIONS  */
@@ -1024,6 +1115,7 @@ async function submitRequest(confirmed = false) {
     }
     requestItems.value = [];
     requestUniforms.value = [];
+    againFrom.value = null;
     studentName.value = "";
     studentNumber.value = "";
     studentPaid.value = false;
@@ -1129,6 +1221,16 @@ watch(activeTab, async () => {
         style="flex: 2; height: 100%"
       >
         <h4 class="mb-4">Request Item</h4>
+
+        <div v-if="againFrom" class="alert alert-info py-2 small d-flex justify-content-between gap-2">
+          <div>
+            <strong>New request based on rejected request #{{ againFrom.id }}.</strong>
+            <span v-if="againFrom.reason"> It was rejected: {{ againFrom.reason }}.</span>
+            Review the items and purpose, change what was the problem, then submit.
+            <div v-if="againFrom.notes" class="mt-1">{{ againFrom.notes }}</div>
+          </div>
+          <button type="button" class="btn-close" aria-label="Dismiss" @click="againFrom = null"></button>
+        </div>
 
         <div class="mb-3">
           <label for="rq-category" class="form-label">Category</label>
@@ -1923,6 +2025,34 @@ watch(activeTab, async () => {
                 class="text-danger mt-2"
               >
                 <strong>Rejection Reason:</strong> {{ selected.rejectReason }}
+              </div>
+
+              <div v-if="(selected.status || '').toLowerCase() === 'rejected' || selected.appealedAt" class="mt-3 border-top pt-2">
+                <div v-if="selected.appealedAt" class="small">
+                  <div><strong>Your appeal:</strong> {{ selected.appealMessage }}</div>
+                  <div v-if="selected.appealDecision" class="mt-1">
+                    <span class="badge" :class="selected.appealDecision === 'Reopened' ? 'bg-success' : 'bg-secondary'">
+                      {{ selected.appealDecision === "Reopened" ? "Accepted" : "Not accepted" }}
+                    </span>
+                    <strong class="ms-1">Reply:</strong> {{ selected.appealReply }}
+                  </div>
+                  <div v-else class="text-muted mt-1">Waiting for a reply.</div>
+                </div>
+                <div v-if="(selected.status || '').toLowerCase() !== 'rejected'"></div>
+                <div v-else-if="appealOpen" class="mt-2">
+                  <label class="form-label small" for="rq-appeal">Explain why this request should be reconsidered</label>
+                  <textarea id="rq-appeal" name="appeal_message" v-model="appealText" maxlength="100" rows="3" class="form-control"></textarea>
+                  <div class="form-text text-end" :class="{ 'text-danger': (appealText || '').length >= 100 }">{{ (appealText || '').length }} / 100</div>
+                  <div class="d-flex gap-2 justify-content-end mt-1">
+                    <button class="btn btn-sm btn-secondary" :disabled="appealBusy" @click="appealOpen = false">Cancel</button>
+                    <button class="btn btn-sm btn-primary" :disabled="appealBusy" @click="sendAppeal">Send appeal</button>
+                  </div>
+                </div>
+                <div v-else class="d-flex flex-wrap gap-2 mt-2">
+                  <button v-if="canAppeal(selected)" class="btn btn-sm btn-outline-primary" @click="appealOpen = true">Appeal this decision</button>
+                  <button class="btn btn-sm btn-success" @click="requestAgain(selected)">Request again</button>
+                </div>
+                <div v-if="(selected.status || '').toLowerCase() === 'rejected' && !selected.appealedAt && !canAppeal(selected)" class="small text-muted mt-1">The {{ APPEAL_DAYS }}-day appeal period has passed. You can still request again.</div>
               </div>
             </div>
 

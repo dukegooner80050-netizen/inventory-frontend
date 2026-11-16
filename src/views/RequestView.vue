@@ -637,6 +637,7 @@ async function loadMyRequests() {
         appealDecision: request.appealDecision || "",
         appealReply: request.appealReply || "",
         appealDecidedAt: request.appealDecidedAt || null,
+        againUsedAt: request.againUsedAt || null,
         approvalRemarks: request.approvalRemarks,
 
         items: (request.items || []).map((item) => ({
@@ -690,13 +691,17 @@ async function mixConflictDiscard() {
   await addToList();
 }
 
-/* ---- Rejected requests: appeal once, or start a new request from it ---- */
+/* ---- Rejected requests: the requester can appeal once ---- */
 
 const APPEAL_DAYS = 7;
 const appealOpen = ref(false);
 const appealText = ref("");
 const appealBusy = ref(false);
-const againFrom = ref(null); // { id, reason } while the form was filled from a rejected request
+const againFrom = ref(null); // { id, reason, notes } while the form was filled from a rejected request
+
+function canRequestAgain(r) {
+  return !!r && (r.status || "").toLowerCase() === "rejected" && !r.againUsedAt;
+}
 
 watch(selected, () => {
   appealOpen.value = false;
@@ -730,7 +735,7 @@ async function sendAppeal() {
   }
 }
 
-/* Fills the request form from a rejected request. Quantities are checked again when you submit. */
+/* Fills the request form from a rejected request (allowed once per request). Quantities are checked again on submit. */
 function requestAgain(r) {
   const skipped = [];
   requestItems.value = [];
@@ -738,21 +743,11 @@ function requestAgain(r) {
   const cap = maxItems.value;
   for (const line of r.items || []) {
     const inv = invItems.value.find((i) => String(i.id) === String(line.itemId));
-    if (!inv) {
+    if (!inv || (cap !== null && requestItems.value.length >= cap)) {
       skipped.push(line.itemName);
       continue;
     }
-    if (cap !== null && requestItems.value.length >= cap) {
-      skipped.push(line.itemName);
-      continue;
-    }
-    requestItems.value.push({
-      itemId: line.itemId,
-      itemName: line.itemName,
-      category: line.category,
-      itemType: line.itemType,
-      qty: line.qty,
-    });
+    requestItems.value.push({ itemId: line.itemId, itemName: line.itemName, category: line.category, itemType: line.itemType, qty: line.qty });
   }
   requestPurpose.value = r.purpose || "";
   location.value = r.location || "";
@@ -771,6 +766,7 @@ function requestAgain(r) {
       skipped.length ? `Not copied (unavailable or over your limit): ${skipped.join(", ")}.` : "",
     ].filter(Boolean).join(" "),
   };
+  selected.value = null;
   activeTab.value = "create";
 }
 
@@ -1058,6 +1054,7 @@ async function submitRequest(confirmed = false) {
   const reserveLines = requestUniforms.value.filter((u) => u.reserve);
 
   const payload = {
+    ...(againFrom.value ? { again_of: againFrom.value.id } : {}),
     location: uniformOnly.value ? AMO_OFFICE : location.value,
     room: uniformOnly.value
       ? "N/A"
@@ -1226,11 +1223,12 @@ watch(activeTab, async () => {
           <div>
             <strong>New request based on rejected request #{{ againFrom.id }}.</strong>
             <span v-if="againFrom.reason"> It was rejected: {{ againFrom.reason }}.</span>
-            Review the items and purpose, change what was the problem, then submit.
+            Review the items and purpose, change what was the problem, then submit. This can be done only once for a rejected request.
             <div v-if="againFrom.notes" class="mt-1">{{ againFrom.notes }}</div>
           </div>
           <button type="button" class="btn-close" aria-label="Dismiss" @click="againFrom = null"></button>
         </div>
+
 
         <div class="mb-3">
           <label for="rq-category" class="form-label">Category</label>
@@ -2050,7 +2048,8 @@ watch(activeTab, async () => {
                 </div>
                 <div v-else class="d-flex flex-wrap gap-2 mt-2">
                   <button v-if="canAppeal(selected)" class="btn btn-sm btn-outline-primary" @click="appealOpen = true">Appeal this decision</button>
-                  <button class="btn btn-sm btn-success" @click="requestAgain(selected)">Request again</button>
+                  <button v-if="canRequestAgain(selected)" class="btn btn-sm btn-success" @click="requestAgain(selected)">Request again</button>
+                  <span v-else-if="(selected.status || '').toLowerCase() === 'rejected'" class="small text-muted align-self-center">Request again already used.</span>
                 </div>
                 <div v-if="(selected.status || '').toLowerCase() === 'rejected' && !selected.appealedAt && !canAppeal(selected)" class="small text-muted mt-1">The {{ APPEAL_DAYS }}-day appeal period has passed. You can still request again.</div>
               </div>

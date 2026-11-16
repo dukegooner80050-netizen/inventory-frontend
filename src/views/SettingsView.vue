@@ -218,8 +218,9 @@ async function loadAccountRequests() {
       try { deptList.value = await getDepartments(); } catch { deptList.value = []; }
     }
     arRequests.value.forEach((r) => {
-      if (!arRoleChoice[r.idUsers]) arRoleChoice[r.idUsers] = "instructor";
-      if (arDeptChoice[r.idUsers] === undefined) arDeptChoice[r.idUsers] = "";
+      // Start from what the person said when signing up; the AMO can change it.
+      if (!arRoleChoice[r.idUsers]) arRoleChoice[r.idUsers] = r.requested_role || "instructor";
+      if (arDeptChoice[r.idUsers] === undefined) arDeptChoice[r.idUsers] = r.requested_iddept || "";
     });
   } catch (e) {
     notify("danger", getErrorMessage(e));
@@ -940,8 +941,20 @@ onMounted(async () => {
 
               <tbody>
                 <tr v-for="r in arRequests" :key="r.idUsers">
-                  <td>{{ r.full_name }}</td>
-                  <td>{{ r.username }}</td>
+                  <td>
+                    {{ r.full_name }}
+                    <div v-if="r.requested_role" class="small" :class="arRoleChoice[r.idUsers] === r.requested_role ? 'text-muted' : 'text-warning'">
+                      Requested: {{ ROLE_LABELS[r.requested_role] || r.requested_role }}
+                    </div>
+                  </td>
+                  <td>
+                    {{ r.username }}
+                    <div v-if="r.employee_id" class="small text-muted">ID: {{ r.employee_id }}</div>
+                    <div v-if="r.email" class="small text-muted">
+                      {{ r.email }}
+                      <span v-if="r.email_verified" class="badge bg-success ms-1">verified</span>
+                    </div>
+                  </td>
                   <td>{{ formatDate(r.requested_at) }}</td>
                   <td>
                     <select

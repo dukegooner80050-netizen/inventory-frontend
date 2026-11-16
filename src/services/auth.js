@@ -3,8 +3,11 @@ import axios from "../axios";
 import { setCurrentUser, getCurrentUser, clearCurrentUser } from "./storage";
 
 /** SIGN UP */
-export async function signup({ full_name, username, password }) {
+export async function signup({ full_name, username, password, requested_role, requested_iddept, employee_id }) {
   const response = await axios.post("/register", {
+    requested_role,
+    requested_iddept,
+    employee_id,
         full_name,
         username,
         password,

@@ -179,7 +179,7 @@ onMounted(refresh)
     </template>
 
     <template v-else-if="tab === 'direct'">
-      <p class="text-muted small">Instructors can skip the department head when you are away. These already went to the AMO. Acknowledge them, or flag a concern; flagging notifies the AMO. Neither action blocks or undoes the request.</p>
+      <p class="text-muted small">Instructors can skip the program head when you are away. These already went to the AMO. Acknowledge them, or flag a concern; flagging notifies the AMO. Neither action blocks or undoes the request.</p>
       <div v-if="!directRequests.length" class="alert alert-success">No requests were sent directly to the AMO.</div>
       <div v-else class="table-responsive table-scroll bg-body rounded shadow-sm">
         <table class="table table-hover align-middle mb-0">

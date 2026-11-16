@@ -135,7 +135,7 @@ const pendingRequests = computed(() =>
   requests.value.filter((r) => ["with inventory", "pending"].includes((r.status || "").toLowerCase())),
 );
 
-// Waiting on the department head; the AMO can take these over if the head is unavailable.
+// Waiting on the program head; the AMO can take these over if the head is unavailable.
 const coordinatorRequests = computed(() =>
   requests.value.filter((r) => (r.status || "").toLowerCase() === "with coordinator"),
 );
@@ -319,7 +319,7 @@ async function executeConfirm() {
 
 const ROLE_NAMES = {
   amo: "AMO",
-  department_head: "Department Head",
+  department_head: "Program Head",
   admin: "Admin",
   instructor: "Instructor",
   cashier: "Cashier",
@@ -464,7 +464,7 @@ function statusBadgeClass(status) {
         :class="{ active: activeTab === 'coordinator' }"
         @click="activeTab = 'coordinator'; expandedId = null"
       >
-        With Dept. Head
+        With Program Head
         <span class="badge bg-secondary ms-1">{{ coordinatorRequests.length }}</span>
       </button>
       <button
@@ -520,9 +520,9 @@ function statusBadgeClass(status) {
                     Direct to AMO
                   </div>
                   <div v-if="r.directReason && r.coordReview" class="badge mt-1 ms-1" :class="r.coordReview === 'Flagged' ? 'bg-danger' : 'bg-success'" :title="r.coordReviewNote || ''">
-                    Dept. head: {{ r.coordReview }}
+                    Program head: {{ r.coordReview }}
                   </div>
-                  <div v-else-if="r.directReason" class="badge bg-secondary mt-1 ms-1">Dept. head: not reviewed</div>
+                  <div v-else-if="r.directReason" class="badge bg-secondary mt-1 ms-1">Program head: not reviewed</div>
                   <div v-if="fulfilmentState(r)" class="badge mt-1" :class="fulfilmentState(r).cls">
                     {{ fulfilmentState(r).text }}
                   </div>
@@ -548,7 +548,7 @@ function statusBadgeClass(status) {
                     <button
                       v-if="(r.status || '').toLowerCase() === 'with coordinator'"
                       class="btn btn-sm btn-warning text-dark"
-                      title="The department head is unavailable: move this request to Inventory"
+                      title="The program head is unavailable: move this request to Inventory"
                       @click="openTakeoverModal(r.id)"
                     >
                       Take over
@@ -678,10 +678,10 @@ function statusBadgeClass(status) {
                           ({{ roleLabel(r.role) }}<template v-if="r.requesterDept">, {{ r.requesterDept }}</template>)
                         </div>
                         <div class="mb-1"><strong>Purpose:</strong> {{ r.purpose || "—" }}</div>
-                        <div v-if="r.directReason" class="mb-1 text-warning-emphasis"><strong>Sent directly (skipped department head):</strong> {{ r.directReason }}</div>
+                        <div v-if="r.directReason" class="mb-1 text-warning-emphasis"><strong>Sent directly (skipped program head):</strong> {{ r.directReason }}</div>
                         <div v-if="r.coordReview" class="mb-1" :class="['Flagged', 'Rejected'].includes(r.coordReview) ? 'text-danger' : 'text-success'">
-                          <strong v-if="r.coordReview === 'Bypassed'">AMO took over (department head unavailable)</strong>
-                          <strong v-else>Department head {{ r.coordReview.toLowerCase() }}</strong>
+                          <strong v-if="r.coordReview === 'Bypassed'">AMO took over (program head unavailable)</strong>
+                          <strong v-else>Program head {{ r.coordReview.toLowerCase() }}</strong>
                           <span v-if="r.coordReviewedBy"> ({{ r.coordReviewedBy }})</span>
                           <span v-if="r.coordReviewNote"> — {{ r.coordReviewNote }}</span>
                         </div>
@@ -784,7 +784,7 @@ function statusBadgeClass(status) {
 
     <div class="modal-body">
       <p class="small text-muted">
-        This skips the department head review and moves the request to Inventory.
+        This skips the program head review and moves the request to Inventory.
         The reason is saved on the request and the instructor is notified.
       </p>
       <label class="form-label">Reason</label>
@@ -792,7 +792,7 @@ function statusBadgeClass(status) {
         v-model="takeoverReason"
         class="form-control"
         rows="3"
-        placeholder="e.g. Department head is on leave"
+        placeholder="e.g. Program head is on leave"
       ></textarea>
 <div class="form-text text-end" :class="{ 'text-danger': (takeoverReason || '').length >= 100 }">{{ (takeoverReason || '').length }} / 100</div>
     </div>

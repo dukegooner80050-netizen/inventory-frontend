@@ -16,7 +16,7 @@ export async function updateUser(id, data) {
     return (await axios.put(`/users/${id}`, data)).data;
 }
 
-// AMO: set an instructor's / department head's department (null clears it).
+// AMO: set an instructor's / program head's department (null clears it).
 export async function setUserDepartment(id, iddept) {
   const { data } = await axios.put(`/users/${id}/department`, { iddept: iddept || null });
   return data;

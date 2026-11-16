@@ -198,7 +198,7 @@ const arDeptChoice = reactive({}); // { [idUsers]: iddept | "" } chosen while ap
 const arRoleChoice = reactive({}); // { [idUsers]: "amo" | "department_head" | "admin" | "instructor" | "cashier" }
 const ROLE_LABELS = {
   amo: "AMO",
-  department_head: "Department Head",
+  department_head: "Program Head",
   admin: "Admin",
   instructor: "Instructor",
   cashier: "Cashier",
@@ -302,7 +302,7 @@ async function arRunConfirmed() {
 
 const amLoading = ref(true);
 const amUsers = ref([]);
-/* Instructors / department heads with no department can't be routed, so remind the AMO to set it. */
+/* Instructors / program heads with no department can't be routed, so remind the AMO to set it. */
 const amNoDept = computed(() =>
   amUsers.value.filter(
     (u) => ["instructor", "department_head"].includes(String(u.role || "").toLowerCase())
@@ -350,7 +350,7 @@ async function saveSid() {
 
 // Request limits per role (General tab): items per request + requests per month
 const RL_ROLES = [
-  ["department_head", "Department Head"],
+  ["department_head", "Program Head"],
   ["admin", "Admin"],
   ["instructor", "Instructor"],
   ["cashier", "Cashier"],
@@ -949,7 +949,7 @@ onMounted(async () => {
                       v-model="arRoleChoice[r.idUsers]"
                       :aria-label="'Role for ' + r.full_name"
                     >
-                      <option value="department_head">Department Head</option>
+                      <option value="department_head">Program Head</option>
                       <option value="admin">Admin</option>
                       <option value="instructor">Instructor</option>
                       <option value="cashier">Cashier</option>
@@ -1010,9 +1010,9 @@ onMounted(async () => {
       <div v-else class="card shadow-sm">
         <div class="card-body">
           <div v-if="amNoDept.length" class="alert alert-warning py-2 small">
-            {{ amNoDept.length }} instructor / department head account(s) have no department
+            {{ amNoDept.length }} instructor / program head account(s) have no department
             ({{ amNoDept.map((u) => u.full_name).join(", ") }}). Their requests go to every
-            department head until a department is set.
+            program head until a department is set.
           </div>
           <div class="table-responsive">
             <table class="table table-striped table-hover align-middle mb-0">
@@ -1051,7 +1051,7 @@ onMounted(async () => {
                       :aria-label="'Role for ' + u.full_name"
                     >
                       <option value="amo">AMO</option>
-                      <option value="department_head">Department Head</option>
+                      <option value="department_head">Program Head</option>
                       <option value="admin">Admin</option>
                       <option value="instructor">Instructor</option>
                       <option value="cashier">Cashier</option>
@@ -1200,7 +1200,7 @@ onMounted(async () => {
             Department:
             <strong>{{ deptList.find((d) => String(d.iddept) === String(arDeptChoice[arConfirmTarget?.idUsers]))?.dept_name || "Not set" }}</strong>
             <span v-if="!arDeptChoice[arConfirmTarget?.idUsers]">
-              &mdash; requests can't be routed to a department head until a department is set.
+              &mdash; requests can't be routed to a program head until a department is set.
             </span>
           </p>
 

@@ -108,14 +108,14 @@ const location = ref("");
 const room = ref("");
 const roomOther = ref(""); // where, when Room is "Others"
 const requestPurpose = ref("");
-// Instructors: skip the department head when they are away or there is none.
+// Instructors: skip the program head when they are away or there is none.
 const sendDirect = ref(false);
 const directReasonChoice = ref("");
 const directReasonOther = ref("");
 const DIRECT_REASONS = [
-  "Department head is not present",
-  "Department head is unavailable",
-  "No department head assigned",
+  "Program head is not present",
+  "Program head is unavailable",
+  "No program head assigned",
   "Other",
 ];
 const directReason = computed(() =>
@@ -1514,12 +1514,12 @@ watch(activeTab, async () => {
           <div class="form-check">
             <input id="rq-send-direct" name="send_direct" type="checkbox" class="form-check-input" v-model="sendDirect" />
             <label for="rq-send-direct" class="form-check-label">
-              Send directly to the AMO (skip the department head)
+              Send directly to the AMO (skip the program head)
             </label>
           </div>
           <div v-if="sendDirect" class="mt-2">
             <select v-model="directReasonChoice" class="form-select" id="rq-direct-reason" name="direct_reason_choice">
-              <option value="">Why is the department head skipped?</option>
+              <option value="">Why is the program head skipped?</option>
               <option v-for="r in DIRECT_REASONS" :key="r" :value="r">{{ r }}</option>
             </select>
             <input
@@ -1848,7 +1848,7 @@ watch(activeTab, async () => {
               <div><strong>Location:</strong> {{ selected.location }}</div>
               <div><strong>Room:</strong> {{ selected.room }}</div>
               <div><strong>Purpose:</strong> {{ selected.purpose }}</div>
-              <div v-if="selected.directReason"><strong>Sent directly to the AMO:</strong> {{ selected.directReason }}<span v-if="selected.coordReview"> — Department head {{ selected.coordReview.toLowerCase() }}<span v-if="selected.coordReviewNote">: {{ selected.coordReviewNote }}</span></span></div>
+              <div v-if="selected.directReason"><strong>Sent directly to the AMO:</strong> {{ selected.directReason }}<span v-if="selected.coordReview"> — Program head {{ selected.coordReview.toLowerCase() }}<span v-if="selected.coordReviewNote">: {{ selected.coordReviewNote }}</span></span></div>
               <div v-if="selected.studentName"><strong>Student:</strong> {{ selected.studentName }}<span v-if="selected.studentNumber"> (ID {{ selected.studentNumber }})</span></div>
               <div><strong>Status:</strong> {{ selected.status }}</div>
               <div v-if="(selected.status || '').toLowerCase() === 'cancelled' && selected.rejectReason" class="text-danger"><strong>Cancelled:</strong> {{ selected.rejectReason }}</div>

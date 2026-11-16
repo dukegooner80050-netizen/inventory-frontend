@@ -119,7 +119,7 @@ export function buildBorrowerFormHtml(request) {
 
   <div class="signs">
     ${sign("Requested by:", "Borrower", request.requesterName || request.requester)}
-    ${sign("Noted by:", "Department Head", request.notedBy)}
+    ${sign("Noted by:", "Program Head", request.notedBy)}
     ${sign("Recommending Approval:", "VP Administration / VPAA", "")}
     ${sign("Approved by:", "Pres. / EVP / SVP / VP", "")}
   </div>

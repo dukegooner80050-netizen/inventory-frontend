@@ -51,3 +51,12 @@ export async function getStockLevels() {
 export async function updateStockLevels(payload) {
     return (await axios.put("/settings/stock-levels", payload)).data;
 }
+
+// Allowed sign-up email domains. AMO only; an empty list means any email is accepted.
+export async function getEmailDomains() {
+    return (await axios.get("/settings/email-domains")).data;
+}
+
+export async function updateEmailDomains(domains) {
+    return (await axios.put("/settings/email-domains", { domains })).data;
+}

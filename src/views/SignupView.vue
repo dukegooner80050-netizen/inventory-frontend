@@ -78,6 +78,7 @@ function startOver() {
   code.value = "";
   showAlert.value = false;
 }
+const emailDomains = ref([]);
 const requestedRole = ref("");
 const requestedDept = ref("");
 const departments = ref([]);
@@ -89,17 +90,27 @@ onMounted(async () => {
   } catch {
     departments.value = [];
   }
+  try {
+    emailDomains.value = (await axios.get("/public/email-domains", { silent: true })).data.domains || [];
+  } catch {
+    emailDomains.value = [];
+  }
 });
 const showAlert = ref(false);
 const alertType = ref("success");
 const alertMessage = ref("");
 
+function domainOk(value) {
+  if (!emailDomains.value.length) return true;
+  const host = value.trim().toLowerCase().split("@")[1] || "";
+  return emailDomains.value.some((d) => host === d || host.endsWith("." + d));
+}
 const triedSubmit = ref(false);
 const missing = computed(() => ({
   fullName: !fullName.value.trim(),
   role: !requestedRole.value,
   dept: needsDept.value && !requestedDept.value,
-  email: !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim()),
+  email: !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim()) || !domainOk(email.value),
   username: !username.value.trim(),
   password: !password.value,
   confirm: !confirmPassword.value || password.value !== confirmPassword.value,
@@ -257,8 +268,10 @@ async function submit() {
             maxlength="120"
             required
           />
-          <div class="invalid-feedback">Enter a valid email address.</div>
-          <div class="form-text">We will email you a code to confirm it.</div>
+          <div class="invalid-feedback">{{ emailDomains.length ? "Use your school email address." : "Enter a valid email address." }}</div>
+          <div class="form-text">
+            <span v-if="emailDomains.length">Use your school email ({{ emailDomains.map((d) => "@" + d).join(" or ") }}). </span>We will email you a code to confirm it.
+          </div>
         </div>
 
         <div class="mb-2">

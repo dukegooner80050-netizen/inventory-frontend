@@ -4,6 +4,8 @@ import { useRoute } from "vue-router";
 import {
   getRequestLimits,
   updateRequestLimits,
+  getEmailDomains,
+  updateEmailDomains,
   getReturnPeriods,
   updateReturnPeriods,
   getStockLevels,
@@ -172,6 +174,10 @@ async function loadGeneral() {
       Object.assign(rlSaved[k], lim.by_role[k]);
       Object.assign(rlNew[k], lim.by_role[k]);
     }
+
+    const ed = await getEmailDomains();
+    edSaved.value = (ed.domains || []).join(", ");
+    edText.value = edSaved.value;
 
     const levels = await getStockLevels();
     Object.assign(slEquipment, levels.school_equipment);
@@ -363,6 +369,23 @@ const rlSaving = ref(false);
 const rlChanged = computed(() =>
   RL_ROLES.some(([k]) => Number(rlNew[k].items) !== Number(rlSaved[k].items) || Number(rlNew[k].monthly) !== Number(rlSaved[k].monthly)),
 );
+const edText = ref("");
+const edSaved = ref("");
+const edSaving = ref(false);
+async function saveEd() {
+  edSaving.value = true;
+  try {
+    const res = await updateEmailDomains(edText.value);
+    edSaved.value = (res.domains || []).join(", ");
+    edText.value = edSaved.value;
+    notify("success", edSaved.value ? "Sign-up is now limited to those email domains." : "Sign-up email restriction is off.");
+  } catch (e) {
+    notify("danger", getErrorMessage(e));
+  } finally {
+    edSaving.value = false;
+  }
+}
+
 async function saveRl() {
   for (const [k, label] of RL_ROLES) {
     const i = Number(rlNew[k].items), m = Number(rlNew[k].monthly);
@@ -770,6 +793,35 @@ onMounted(async () => {
           </div>
           <div class="text-end mt-3">
             <button class="btn btn-primary" :disabled="rlSaving || !rlChanged" @click="saveRl">
+              Save
+            </button>
+          </div>
+        </div>
+      </div>
+      </div>
+
+      <div class="col-12">
+      <div v-if="canEditLimit && !loading" class="card shadow-sm mb-3">
+        <div class="card-body">
+          <h6 class="mb-2">Allowed Sign-up Email Domains</h6>
+          <p class="text-muted small">
+            Only people with an email ending in one of these domains can sign up
+            (for example <code>school.edu.ph</code>, the part after the @). Separate several
+            with commas. <strong>Leave it empty to accept any email.</strong> Existing accounts are not affected.
+          </p>
+          <input
+            id="st-email-domains"
+            name="email_domains"
+            aria-label="Allowed sign-up email domains"
+            type="text"
+            maxlength="500"
+            class="form-control"
+            placeholder="e.g. school.edu.ph"
+            v-model="edText"
+            :disabled="edSaving"
+          />
+          <div class="text-end mt-3">
+            <button class="btn btn-primary" :disabled="edSaving || edText.trim() === edSaved" @click="saveEd">
               Save
             </button>
           </div>

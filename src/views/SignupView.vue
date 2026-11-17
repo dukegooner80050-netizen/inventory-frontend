@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from "vue";
+import { ref, computed, nextTick, onMounted, onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router";
 import axios from "../axios";
 import AlertMessage from "../components/AlertMessage.vue";
@@ -94,7 +94,31 @@ const showAlert = ref(false);
 const alertType = ref("success");
 const alertMessage = ref("");
 
+const triedSubmit = ref(false);
+const missing = computed(() => ({
+  fullName: !fullName.value.trim(),
+  role: !requestedRole.value,
+  dept: needsDept.value && !requestedDept.value,
+  email: !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim()),
+  username: !username.value.trim(),
+  password: !password.value,
+  confirm: !confirmPassword.value || password.value !== confirmPassword.value,
+}));
+function bad(key) {
+  return triedSubmit.value && missing.value[key];
+}
+
 async function submit() {
+  triedSubmit.value = true;
+  if (Object.values(missing.value).some(Boolean)) {
+    await nextTick();
+    const el = document.querySelector(".is-invalid");
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.focus({ preventScroll: true });
+    }
+    return;
+  }
   if (password.value !== confirmPassword.value) {
     alertType.value = "danger";
     alertMessage.value = "Passwords do not match.";
@@ -109,7 +133,7 @@ async function submit() {
       full_name: fullName.value,
       username: username.value,
       password: password.value,
-      employee_id: employeeId.value.trim(),
+      employee_id: employeeId.value.trim() || null,
       requested_role: requestedRole.value,
       requested_iddept: needsDept.value ? requestedDept.value || null : null,
     });
@@ -183,63 +207,68 @@ async function submit() {
         </div>
       </form>
 
-      <form v-else @submit.prevent="submit">
+      <form v-else novalidate @submit.prevent="submit">
         <div class="mb-2">
-          <label class="form-label" for="signup-fullname">Full Name</label>
+          <label class="form-label" for="signup-fullname">Full Name <span class="text-danger" aria-hidden="true">*</span></label>
           <input
             id="signup-fullname"
             name="full_name"
             v-model="fullName"
             class="form-control"
+            :class="{ 'is-invalid': bad('fullName') }"
             autocomplete="name"
             required
           />
+          <div class="invalid-feedback">Enter your full name.</div>
         </div>
 
         <div class="mb-2">
-          <label class="form-label" for="signup-role">I am signing up as</label>
-          <select id="signup-role" name="requested_role" v-model="requestedRole" class="form-select" required>
+          <label class="form-label" for="signup-role">I am signing up as <span class="text-danger" aria-hidden="true">*</span></label>
+          <select id="signup-role" name="requested_role" v-model="requestedRole" class="form-select" :class="{ 'is-invalid': bad('role') }" required>
             <option value="" disabled>Select your role</option>
             <option value="instructor">Instructor</option>
             <option value="department_head">Program Head</option>
             <option value="admin">Admin (office staff)</option>
             <option value="cashier">Cashier</option>
           </select>
+          <div class="invalid-feedback">Select your role.</div>
           <div class="form-text">The AMO will check this before approving your account.</div>
         </div>
 
         <div v-if="needsDept" class="mb-2">
-          <label class="form-label" for="signup-dept">Department</label>
-          <select id="signup-dept" name="requested_iddept" v-model="requestedDept" class="form-select" required>
+          <label class="form-label" for="signup-dept">Department <span class="text-danger" aria-hidden="true">*</span></label>
+          <select id="signup-dept" name="requested_iddept" v-model="requestedDept" class="form-select" :class="{ 'is-invalid': bad('dept') }" required>
             <option value="" disabled>Select your department</option>
             <option v-for="d in departments" :key="d.iddept" :value="d.iddept">{{ d.dept_name }}</option>
           </select>
+          <div class="invalid-feedback">Select your department.</div>
         </div>
 
         <div class="mb-2">
-          <label class="form-label" for="signup-email">Email</label>
+          <label class="form-label" for="signup-email">Email <span class="text-danger" aria-hidden="true">*</span></label>
           <input
             id="signup-email"
             name="email"
             v-model="email"
             type="email"
             class="form-control"
+            :class="{ 'is-invalid': bad('email') }"
             autocomplete="email"
             maxlength="120"
             required
           />
+          <div class="invalid-feedback">Enter a valid email address.</div>
           <div class="form-text">We will email you a code to confirm it.</div>
         </div>
 
         <div class="mb-2">
-          <label class="form-label" for="signup-empid">Employee ID</label>
+          <label class="form-label" for="signup-empid">Employee ID <span class="text-muted">(optional)</span></label>
           <input
             id="signup-empid"
             name="employee_id"
             v-model="employeeId"
             class="form-control"
             maxlength="30"
-            required
             autocomplete="off"
             placeholder="Letters, numbers and a dash"
           />
@@ -247,43 +276,50 @@ async function submit() {
         </div>
 
         <div class="mb-2">
-          <label class="form-label" for="signup-username">Username</label>
+          <label class="form-label" for="signup-username">Username <span class="text-danger" aria-hidden="true">*</span></label>
           <input
             id="signup-username"
             name="username"
             v-model="username"
             class="form-control"
+            :class="{ 'is-invalid': bad('username') }"
             autocomplete="username"
             required
           />
+          <div class="invalid-feedback">Enter a username.</div>
         </div>
 
         <div class="mb-2">
-          <label class="form-label" for="signup-password">Password</label>
+          <label class="form-label" for="signup-password">Password <span class="text-danger" aria-hidden="true">*</span></label>
           <input
             id="signup-password"
             name="password"
             v-model="password"
             type="password"
             class="form-control"
+            :class="{ 'is-invalid': bad('password') }"
             autocomplete="new-password"
             required
           />
+          <div class="invalid-feedback">Enter a password.</div>
         </div>
 
         <div class="mb-3">
-          <label class="form-label" for="signup-confirm">Confirm Password</label>
+          <label class="form-label" for="signup-confirm">Confirm Password <span class="text-danger" aria-hidden="true">*</span></label>
           <input
             id="signup-confirm"
             name="password_confirmation"
             v-model="confirmPassword"
             type="password"
             class="form-control"
+            :class="{ 'is-invalid': bad('confirm') }"
             autocomplete="new-password"
             required
           />
+          <div class="invalid-feedback">{{ confirmPassword ? "Passwords do not match." : "Confirm your password." }}</div>
         </div>
 
+        <div class="form-text mb-2"><span class="text-danger">*</span> Required</div>
         <button class="btn btn-primary w-100" :disabled="busy">{{ busy ? "Sending code…" : "Sign Up" }}</button>
       </form>
 

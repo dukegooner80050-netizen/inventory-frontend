@@ -697,6 +697,33 @@ const APPEAL_DAYS = 7;
 const appealOpen = ref(false);
 const appealText = ref("");
 const appealBusy = ref(false);
+const triedSubmit = ref(false); // turns on the red "required" marks after the first submit attempt
+const missing = computed(() => {
+  const m = {};
+  if (uniformOnly.value) {
+    m.studentName = !studentName.value.trim();
+    m.studentNumber = !studentNumber.value.trim() || !/^[0-9-]+$/.test(studentNumber.value.trim());
+  } else {
+    m.location = !location.value;
+    m.room = !room.value;
+    m.roomOther = room.value === "Others" && !roomOther.value.trim();
+  }
+  m.paid = requestUniforms.value.length > 0 && !studentPaid.value;
+  m.directReason = userRole === "instructor" && sendDirect.value && directReason.value.length < 3;
+  m.purpose = !requestPurpose.value.trim();
+  return m;
+});
+function showMiss(key) {
+  return triedSubmit.value && !!missing.value[key];
+}
+async function scrollToFirstMissing() {
+  await nextTick();
+  const el = document.querySelector(".is-invalid");
+  if (el) {
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    if (el.focus) el.focus({ preventScroll: true });
+  }
+}
 const againFrom = ref(null); // { id, reason, notes } while the form was filled from a rejected request
 
 function canRequestAgain(r) {
@@ -929,6 +956,8 @@ function showWarning(title, message) {
 /* No argument = show the confirmation; true = really submit. */
 async function submitRequest(confirmed = false) {
   error.value = "";
+  triedSubmit.value = true;
+  if (Object.values(missing.value).some(Boolean)) scrollToFirstMissing();
 
   if (requestItems.value.length === 0 && requestUniforms.value.length === 0) {
     showWarning(
@@ -1113,6 +1142,7 @@ async function submitRequest(confirmed = false) {
     requestItems.value = [];
     requestUniforms.value = [];
     againFrom.value = null;
+    triedSubmit.value = false;
     studentName.value = "";
     studentNumber.value = "";
     studentPaid.value = false;
@@ -1528,61 +1558,68 @@ watch(activeTab, async () => {
         </div>
 
         <div v-if="uniformOnly" class="mb-3">
-          <label for="rq-student-name" class="form-label">Student's full name</label>
+          <label for="rq-student-name" class="form-label">Student's full name<span class="text-danger" aria-hidden="true"> *</span></label>
           <input
             id="rq-student-name"
             name="student_name"
             type="text"
             class="form-control"
+            :class="{ 'is-invalid': showMiss('studentName') }"
             v-model="studentName"
             maxlength="255"
             autocomplete="off"
             placeholder="Who will collect the uniform?"
           />
+          <div class="invalid-feedback">Enter the student's full name.</div>
         </div>
 
         <div v-if="uniformOnly" class="mb-3">
-          <label for="rq-student-number" class="form-label">Student ID number</label>
+          <label for="rq-student-number" class="form-label">Student ID number<span class="text-danger" aria-hidden="true"> *</span></label>
           <input
             id="rq-student-number"
             name="student_number"
             type="text"
             class="form-control"
+            :class="{ 'is-invalid': showMiss('studentNumber') }"
             v-model="studentNumber"
             :maxlength="studentIdMax"
             autocomplete="off"
             placeholder="e.g. 2021-00123"
           />
+          <div class="invalid-feedback">Enter the student ID (numbers and a dash only).</div>
           <div class="form-text">Numbers and a dash only, up to {{ studentIdMax }} characters. The AMO will check the student's ID at pickup.</div>
         </div>
 
         <div v-if="requestUniforms.length > 0" class="form-check mb-3">
-          <input id="rq-student-paid" name="paid" type="checkbox" class="form-check-input" v-model="studentPaid" />
+          <input id="rq-student-paid" name="paid" type="checkbox" class="form-check-input" :class="{ 'is-invalid': showMiss('paid') }" v-model="studentPaid" />
           <label for="rq-student-paid" class="form-check-label">
-            The student has already paid for these uniforms at the cashier
+            The student has already paid for these uniforms at the cashier<span class="text-danger" aria-hidden="true"> *</span>
           </label>
+          <div class="invalid-feedback">Tick this to confirm the student paid.</div>
         </div>
 
         <div v-else class="row">
           <div class="col-md-6">
-            <label for="rq-location" class="form-label">Location</label>
-            <select v-model="location" class="form-select" id="rq-location" name="location">
+            <label for="rq-location" class="form-label">Location<span class="text-danger" aria-hidden="true"> *</span></label>
+            <select v-model="location" class="form-select" :class="{ 'is-invalid': showMiss('location') }" id="rq-location" name="location">
               <option value="">Select location</option>
               <option>SFB.Faculty</option>
               <option>SFB.Building 1</option>
               <option>SFB.Building 2</option>
               <option>SFB.Building 3</option>
             </select>
+            <div class="invalid-feedback">Choose a location.</div>
           </div>
           <div class="col-md-6">
-            <label for="rq-room" class="form-label">Room</label>
-            <select v-model="room" class="form-select" id="rq-room" name="room">
+            <label for="rq-room" class="form-label">Room<span class="text-danger" aria-hidden="true"> *</span></label>
+            <select v-model="room" class="form-select" :class="{ 'is-invalid': showMiss('room') }" id="rq-room" name="room">
               <option value="">Select Room</option>
               <option>Room 201</option>
               <option>Room 202</option>
               <option>Room 203</option>
               <option>Others</option>
             </select>
+            <div class="invalid-feedback">Choose a room.</div>
             <input
               v-if="room === 'Others'"
               id="rq-room-other"
@@ -1590,10 +1627,12 @@ watch(activeTab, async () => {
               v-model="roomOther"
               type="text"
               class="form-control mt-2"
+              :class="{ 'is-invalid': showMiss('roomOther') }"
               maxlength="100"
               placeholder="Specify the room or place"
               aria-label="Specify the room or place"
             />
+            <div v-if="showMiss('roomOther')" class="text-danger small mt-1">Type where the items are needed.</div>
             <div class="form-text text-end" :class="{ 'text-danger': roomOther.length >= 100 }">
               {{ roomOther.length }} / 100
             </div>
@@ -1601,12 +1640,14 @@ watch(activeTab, async () => {
         </div>
 
         <div class="mb-3">
-          <label for="rq-request-purpose" class="form-label">Purpose</label>
+          <label for="rq-request-purpose" class="form-label">Purpose<span class="text-danger" aria-hidden="true"> *</span></label>
           <textarea maxlength="100"
             v-model="requestPurpose"
             class="form-control"
+            :class="{ 'is-invalid': showMiss('purpose') }"
             rows="3"
             placeholder="Enter purpose of request..." id="rq-request-purpose" name="request-purpose"></textarea>
+<div class="invalid-feedback">Write the purpose of the request.</div>
 <div class="form-text text-end" :class="{ 'text-danger': (requestPurpose || '').length >= 100 }">{{ (requestPurpose || '').length }} / 100</div>
         </div>
 
@@ -1618,10 +1659,11 @@ watch(activeTab, async () => {
             </label>
           </div>
           <div v-if="sendDirect" class="mt-2">
-            <select v-model="directReasonChoice" class="form-select" id="rq-direct-reason" name="direct_reason_choice">
+            <select v-model="directReasonChoice" class="form-select" :class="{ 'is-invalid': showMiss('directReason') }" id="rq-direct-reason" name="direct_reason_choice">
               <option value="">Why is the program head skipped?</option>
               <option v-for="r in DIRECT_REASONS" :key="r" :value="r">{{ r }}</option>
             </select>
+            <div class="invalid-feedback">Choose why the program head is skipped.</div>
             <input
               v-if="directReasonChoice === 'Other'"
               v-model="directReasonOther"
@@ -1636,6 +1678,7 @@ watch(activeTab, async () => {
           </div>
         </div>
 
+        <div class="form-text"><span class="text-danger">*</span> Required</div>
         <div class="mt-3">
           <button
             class="btn btn-primary w-100"
@@ -2047,7 +2090,7 @@ watch(activeTab, async () => {
                   </div>
                 </div>
                 <div v-else class="d-flex flex-wrap gap-2 mt-2">
-                  <button v-if="canAppeal(selected)" class="btn btn-sm btn-primary text-white" @click="appealOpen = true">Appeal this decision</button>
+                  <button v-if="canAppeal(selected)" class="btn btn-sm btn-outline-primary" @click="appealOpen = true">Appeal this decision</button>
                   <button v-if="canRequestAgain(selected)" class="btn btn-sm btn-success" @click="requestAgain(selected)">Request again</button>
                   <span v-else-if="(selected.status || '').toLowerCase() === 'rejected'" class="small text-muted align-self-center">Request again already used.</span>
                 </div>

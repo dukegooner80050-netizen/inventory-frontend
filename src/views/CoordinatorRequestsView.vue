@@ -81,7 +81,7 @@ async function review(r, action, note = '') {
 }
 function openFlag(r) { flagTarget.value = r; flagNote.value = '' }
 const unreviewedCount = () => directRequests.value.filter(r => !r.coordReview).length
-// History: everything from instructors in the head's own department.
+// History: everything from instructors and program heads (the academic coordinator reviews all departments).
 const hist = ref({ requests: [], instructors: [], summary: [], scopedToDepartment: true })
 const histLoading = ref(false)
 const monthStart = () => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1).toLocaleDateString('en-CA') }
@@ -127,9 +127,6 @@ onMounted(() => { refresh(); loadAppealCount() })
     <AppealsPanel v-if="tab === 'appeals'" @changed="loadAppealCount(); refresh()" />
 
     <template v-else-if="tab === 'history'">
-      <div v-if="!hist.scopedToDepartment" class="alert alert-warning py-2 small">
-        Your account has no department set, so every instructor is shown. Ask the AMO to set your department (Settings → Account Management) to see only your department's instructors.
-      </div>
       <div class="d-flex flex-wrap gap-2 align-items-end mb-3">
         <div>
           <label for="hf-from" class="form-label small mb-1">From</label>

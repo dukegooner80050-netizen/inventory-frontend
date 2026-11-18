@@ -282,7 +282,7 @@ async function arRunConfirmed() {
 
   try {
     if (arConfirmAction.value === "approve") {
-      const withDept = ["instructor", "department_head", "academic_coordinator"].includes(arConfirmRole.value);
+      const withDept = ["instructor", "department_head"].includes(arConfirmRole.value);
       await approveAccountRequest(target.idUsers, arConfirmRole.value, withDept ? arDeptChoice[target.idUsers] : null);
       notify("success", `Approved "${target.full_name}" as ${ROLE_LABELS[arConfirmRole.value]}.`);
     } else {
@@ -313,7 +313,7 @@ const amUsers = ref([]);
 /* Instructors / program heads with no department can't be routed, so remind the AMO to set it. */
 const amNoDept = computed(() =>
   amUsers.value.filter(
-    (u) => ["instructor", "department_head", "academic_coordinator"].includes(String(u.role || "").toLowerCase())
+    (u) => ["instructor", "department_head"].includes(String(u.role || "").toLowerCase())
       && u.status !== "inactive" && u.status !== "pending" && !u.iddept,
   ),
 );

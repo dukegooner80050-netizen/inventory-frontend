@@ -330,12 +330,10 @@ async function executeConfirm() {
 const ROLE_NAMES = {
   amo: "AMO",
   department_head: "Program Head",
-  dean: "Dean",
   academic_coordinator: "Academic Coordinator",
   admin: "Admin",
   instructor: "Instructor",
   cashier: "Cashier",
-  registrar_staff: "Registrar Staff",
 };
 function roleLabel(role) {
   const k = String(role || "").toLowerCase();
@@ -477,7 +475,7 @@ function statusBadgeClass(status) {
         :class="{ active: activeTab === 'coordinator' }"
         @click="activeTab = 'coordinator'; expandedId = null"
       >
-        With Program Head
+        With Academic Coordinator
         <span class="badge bg-secondary ms-1">{{ coordinatorRequests.length }}</span>
       </button>
       <button

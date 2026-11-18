@@ -119,7 +119,7 @@ export function buildBorrowerFormHtml(request) {
 
   <div class="signs">
     ${sign("Requested by:", "Borrower", request.requesterName || request.requester)}
-    ${sign("Noted by:", ({ dean: "Dean", academic_coordinator: "Academic Coordinator" })[String(request.notedByRole || "").toLowerCase()] || "Program Head", request.notedBy)}
+    ${sign("Noted by:", String(request.notedByRole || "").toLowerCase() === "academic_coordinator" ? "Academic Coordinator" : "Program Head", request.notedBy)}
     ${sign("Recommending Approval:", "VP Administration / VPAA", "")}
     ${sign("Approved by:", "Pres. / EVP / SVP / VP", "")}
   </div>

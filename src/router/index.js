@@ -84,7 +84,7 @@ const routes = [
         component: DashboardView,
         meta: {
           requiresAuth: true,
-          roles: ["amo", "department_head", "dean", "academic_coordinator", "admin", "instructor", "cashier", "registrar_staff"],
+          roles: ["amo", "department_head", "academic_coordinator", "admin", "instructor", "cashier"],
         },
       },
 
@@ -142,7 +142,7 @@ const routes = [
         component: CoordinatorRequestsView,
         meta: {
           requiresAuth: true,
-          roles: ["department_head", "dean", "academic_coordinator"],
+          roles: ["academic_coordinator"],
         },
       },
 
@@ -178,7 +178,7 @@ const routes = [
         component: ConsumptionReportView,
         meta: {
           requiresAuth: true,
-          roles: ["amo", "department_head", "dean", "academic_coordinator", "admin", "instructor", "cashier", "registrar_staff"],
+          roles: ["amo", "department_head", "academic_coordinator", "admin", "instructor", "cashier"],
         },
       },
 
@@ -196,7 +196,7 @@ const routes = [
         component: EquipmentReportsView,
         meta: {
           requiresAuth: true,
-          roles: ["amo", "department_head", "dean", "academic_coordinator", "admin", "instructor", "cashier", "registrar_staff"],
+          roles: ["amo", "department_head", "academic_coordinator", "admin", "instructor", "cashier"],
         },
       },
 
@@ -214,7 +214,7 @@ const routes = [
         component: SettingsView,
         meta: {
           requiresAuth: true,
-          roles: ["amo", "department_head", "dean", "academic_coordinator", "admin", "instructor", "cashier", "registrar_staff"],
+          roles: ["amo", "department_head", "academic_coordinator", "admin", "instructor", "cashier"],
         },
       },
 
@@ -227,7 +227,7 @@ const routes = [
         component: RequestView,
         meta: {
           requiresAuth: true,
-          roles: ["amo", "department_head", "dean", "academic_coordinator", "admin", "instructor", "cashier", "registrar_staff"],
+          roles: ["amo", "department_head", "academic_coordinator", "admin", "instructor", "cashier"],
         },
       },
     ],

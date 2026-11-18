@@ -63,7 +63,7 @@ const user = computed(() => getCurrentUser())
 const isAdmin = computed(
   () => (user.value?.role || "").toLowerCase() === "amo"
 )
-const isDean = computed(() => ["department_head", "dean", "academic_coordinator"].includes((user.value?.role || "").toLowerCase()))
+const isDean = computed(() => (user.value?.role || "").toLowerCase() === "academic_coordinator")
 
 /* SIDEBAR BADGES: one cheap request returns all the counts (the server only COUNTs rows). */
 

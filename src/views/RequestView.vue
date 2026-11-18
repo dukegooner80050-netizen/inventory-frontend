@@ -108,14 +108,15 @@ const location = ref("");
 const room = ref("");
 const roomOther = ref(""); // where, when Room is "Others"
 const requestPurpose = ref("");
-// Instructors: skip the program head when they are away or there is none.
+// Instructors and program heads: skip the academic coordinator when they are away or there is none.
 const sendDirect = ref(false);
+const canSendDirect = ["instructor", "department_head"].includes(String(userRole || "").toLowerCase());
 const directReasonChoice = ref("");
 const directReasonOther = ref("");
 const DIRECT_REASONS = [
-  "Program head is not present",
-  "Program head is unavailable",
-  "No program head assigned",
+  "Academic coordinator is not present",
+  "Academic coordinator is unavailable",
+  "No academic coordinator assigned",
   "Other",
 ];
 const directReason = computed(() =>
@@ -710,7 +711,7 @@ const missing = computed(() => {
     m.roomOther = room.value === "Others" && !roomOther.value.trim();
   }
   m.paid = requestUniforms.value.length > 0 && !studentPaid.value;
-  m.directReason = userRole === "instructor" && sendDirect.value && directReason.value.length < 3;
+  m.directReason = canSendDirect && sendDirect.value && directReason.value.length < 3;
   m.purpose = !requestPurpose.value.trim();
   return m;
 });
@@ -1001,7 +1002,7 @@ async function submitRequest(confirmed = false) {
     );
     return;
   }
-  if (userRole === "instructor" && sendDirect.value && directReason.value.length < 3) {
+  if (canSendDirect && sendDirect.value && directReason.value.length < 3) {
     showWarning("Reason Required", "Choose why this request is going straight to the AMO.");
     return;
   }
@@ -1092,7 +1093,7 @@ async function submitRequest(confirmed = false) {
         ? `Others: ${roomOther.value.trim()}`.slice(0, 255)
         : room.value,
     purpose: requestPurpose.value.trim(),
-    ...(userRole === "instructor" && sendDirect.value ? { send_direct: true, direct_reason: directReason.value } : {}),
+    ...(canSendDirect && sendDirect.value ? { send_direct: true, direct_reason: directReason.value } : {}),
     ...(normalUniforms.length > 0 ? { paid: studentPaid.value } : {}),
     ...(uniformOnly.value ? { student_name: studentName.value.trim(), student_number: studentNumber.value.trim() } : {}),
     items: requestItems.value.map((item) => ({
@@ -1652,19 +1653,19 @@ watch(activeTab, async () => {
 <div class="form-text text-end" :class="{ 'text-danger': (requestPurpose || '').length >= 100 }">{{ (requestPurpose || '').length }} / 100</div>
         </div>
 
-        <div v-if="userRole === 'instructor'" class="mb-3">
+        <div v-if="canSendDirect" class="mb-3">
           <div class="form-check">
             <input id="rq-send-direct" name="send_direct" type="checkbox" class="form-check-input" v-model="sendDirect" />
             <label for="rq-send-direct" class="form-check-label">
-              Send directly to the AMO (skip the program head)
+              Send directly to the AMO (skip the academic coordinator)
             </label>
           </div>
           <div v-if="sendDirect" class="mt-2">
             <select v-model="directReasonChoice" class="form-select" :class="{ 'is-invalid': showMiss('directReason') }" id="rq-direct-reason" name="direct_reason_choice">
-              <option value="">Why is the program head skipped?</option>
+              <option value="">Why is the academic coordinator skipped?</option>
               <option v-for="r in DIRECT_REASONS" :key="r" :value="r">{{ r }}</option>
             </select>
-            <div class="invalid-feedback">Choose why the program head is skipped.</div>
+            <div class="invalid-feedback">Choose why the academic coordinator is skipped.</div>
             <input
               v-if="directReasonChoice === 'Other'"
               v-model="directReasonOther"

@@ -24,7 +24,7 @@ const requests = ref([]);
 // Role picked in each row (everyone starts as Dean).
 const roleChoice = reactive({});
 
-const ROLE_LABELS = { dean: "Dean", cashier: "Cashier", admin: "Admin" };
+const ROLE_LABELS = { dean: "Dean", academic_coordinator: "Academic Coordinator", cashier: "Cashier", admin: "Admin", registrar_staff: "Registrar Staff" };
 
 async function load() {
   loading.value = true;
@@ -161,6 +161,7 @@ async function runConfirmed() {
                   >
                     <option value="instructor">Dean</option>
                     <option value="cashier">Cashier</option>
+                    <option value="registrar_staff">Registrar Staff</option>
                     <option value="admin">Admin</option>
                   </select>
                 </td>

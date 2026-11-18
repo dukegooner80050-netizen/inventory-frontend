@@ -201,13 +201,16 @@ async function loadGeneral() {
 const arLoading = ref(true);
 const arRequests = ref([]);
 const arDeptChoice = reactive({}); // { [idUsers]: iddept | "" } chosen while approving
-const arRoleChoice = reactive({}); // { [idUsers]: "amo" | "department_head" | "admin" | "instructor" | "cashier" }
+const arRoleChoice = reactive({}); // { [idUsers]: "amo" | "department_head" | "dean" | "academic_coordinator" | "admin" | "instructor" | "cashier" | "registrar_staff" }
 const ROLE_LABELS = {
   amo: "AMO",
   department_head: "Program Head",
+  dean: "Dean",
+  academic_coordinator: "Academic Coordinator",
   admin: "Admin",
   instructor: "Instructor",
   cashier: "Cashier",
+  registrar_staff: "Registrar Staff",
 };
 
 async function loadAccountRequests() {
@@ -281,7 +284,7 @@ async function arRunConfirmed() {
 
   try {
     if (arConfirmAction.value === "approve") {
-      const withDept = ["instructor", "department_head"].includes(arConfirmRole.value);
+      const withDept = ["instructor", "department_head", "dean", "academic_coordinator"].includes(arConfirmRole.value);
       await approveAccountRequest(target.idUsers, arConfirmRole.value, withDept ? arDeptChoice[target.idUsers] : null);
       notify("success", `Approved "${target.full_name}" as ${ROLE_LABELS[arConfirmRole.value]}.`);
     } else {
@@ -312,7 +315,7 @@ const amUsers = ref([]);
 /* Instructors / program heads with no department can't be routed, so remind the AMO to set it. */
 const amNoDept = computed(() =>
   amUsers.value.filter(
-    (u) => ["instructor", "department_head"].includes(String(u.role || "").toLowerCase())
+    (u) => ["instructor", "department_head", "dean", "academic_coordinator"].includes(String(u.role || "").toLowerCase())
       && u.status !== "inactive" && u.status !== "pending" && !u.iddept,
   ),
 );
@@ -331,7 +334,7 @@ async function saveDept(user) {
 
 /*  STATE  */
 const amActionsOpen = reactive({}); // { [idUsers]: true } rows whose action buttons are shown
-const amRoleChoice = reactive({}); // { [idUsers]: "amo" | "department_head" | "admin" | "instructor" | "cashier" }
+const amRoleChoice = reactive({}); // { [idUsers]: "amo" | "department_head" | "dean" | "academic_coordinator" | "admin" | "instructor" | "cashier" | "registrar_staff" }
 
 // Student ID length limit (General tab)
 const sidMax = ref(15);
@@ -358,9 +361,12 @@ async function saveSid() {
 // Request limits per role (General tab): items per request + requests per month
 const RL_ROLES = [
   ["department_head", "Program Head"],
+  ["dean", "Dean"],
+  ["academic_coordinator", "Academic Coordinator"],
   ["admin", "Admin"],
   ["instructor", "Instructor"],
   ["cashier", "Cashier"],
+  ["registrar_staff", "Registrar Staff"],
 ];
 const rlBlank = () => Object.fromEntries(RL_ROLES.map(([k]) => [k, { items: 10, monthly: 5 }]));
 const rlSaved = reactive(rlBlank());
@@ -1015,9 +1021,12 @@ onMounted(async () => {
                       :aria-label="'Role for ' + r.full_name"
                     >
                       <option value="department_head">Program Head</option>
+                      <option value="dean">Dean</option>
+                      <option value="academic_coordinator">Academic Coordinator</option>
                       <option value="admin">Admin</option>
                       <option value="instructor">Instructor</option>
                       <option value="cashier">Cashier</option>
+                      <option value="registrar_staff">Registrar Staff</option>
                     </select>
                   </td>
                   <td>
@@ -1117,9 +1126,12 @@ onMounted(async () => {
                     >
                       <option value="amo">AMO</option>
                       <option value="department_head">Program Head</option>
+                      <option value="dean">Dean</option>
+                      <option value="academic_coordinator">Academic Coordinator</option>
                       <option value="admin">Admin</option>
                       <option value="instructor">Instructor</option>
                       <option value="cashier">Cashier</option>
+                      <option value="registrar_staff">Registrar Staff</option>
                     </select>
                   </td>
                   <td>

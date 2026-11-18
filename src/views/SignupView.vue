@@ -241,6 +241,7 @@ async function submit() {
             <option value="department_head">Program Head</option>
             <option value="admin">Admin (office staff)</option>
             <option value="cashier">Cashier</option>
+            <option value="registrar_staff">Registrar Staff</option>
           </select>
           <div class="invalid-feedback">Select your role.</div>
           <div class="form-text">The AMO will check this before approving your account.</div>

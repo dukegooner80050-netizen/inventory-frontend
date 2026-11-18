@@ -610,6 +610,7 @@ async function loadMyRequests() {
         requester: request.requester,
         requesterName: request.requesterName,
         notedBy: request.notedBy,
+        notedByRole: request.notedByRole || null,
         directReason: request.directReason || "",
         coordReview: request.coordReview || "",
         coordReviewNote: request.coordReviewNote || "",

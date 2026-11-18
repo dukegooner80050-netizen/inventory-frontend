@@ -1,4 +1,5 @@
 <script setup>
+import { roleLabel } from "../services/roles";
 import { ref, computed, watch, onMounted, onBeforeUnmount } from "vue"
 import { getLogsPage, getLogUsers } from "../services/logs"
 import { requireUser } from "../services/session"
@@ -258,7 +259,7 @@ function badgeClass(action) {
                   </span>
                 </td>
                 <td>{{ l.performedBy }}</td>
-                <td>{{ l.role }}</td>
+                <td>{{ roleLabel(l.role) }}</td>
                 <td>{{ l.date }}</td>
                 <td>{{ l.time }}</td>
               </tr>

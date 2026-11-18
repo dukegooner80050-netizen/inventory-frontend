@@ -1,4 +1,5 @@
 <script setup>
+import { roleLabel } from "../services/roles";
 import axios from "axios"
 import { computed, ref, onMounted, onBeforeUnmount, watch } from "vue"
 import { useRoute, useRouter } from "vue-router"
@@ -152,7 +153,7 @@ const workBadge = computed(() => pendingCount.value + pendingInspectionCount.val
       />
 
       <h6 class="text-white mb-0">{{ user?.name || user?.username || "" }}</h6>
-      <small class="text-light">{{ user?.role || "" }}</small>
+      <small class="text-light">{{ roleLabel(user?.role) }}</small>
 
       <div class="dropdown mt-2">
         <a class="text-white text-decoration-none dropdown-toggle" href="#" data-bs-toggle="dropdown">

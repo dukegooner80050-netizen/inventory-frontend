@@ -1,4 +1,5 @@
 <script setup>
+import { roleLabel } from "../services/roles";
 import { ref, computed, onMounted, watch, onBeforeUnmount, nextTick } from "vue";
 import { useRouter } from "vue-router";
 import { getItems } from "../services/items";
@@ -1031,7 +1032,7 @@ eventContent(arg) {
                       <span class="text-muted">× {{ l.quantity }}</span>
                     </div>
                     <div class="text-muted small">
-                      {{ l.performedBy }} ({{ l.role }}) • {{ l.date }}
+                      {{ l.performedBy }} ({{ roleLabel(l.role) }}) • {{ l.date }}
                       {{ l.time }}
                     </div>
                   </div>

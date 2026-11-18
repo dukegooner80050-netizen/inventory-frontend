@@ -980,7 +980,7 @@ onMounted(async () => {
 
       <div v-else class="card shadow-sm">
         <div class="card-body">
-          <div class="table-responsive">
+          <div class="table-responsive scroll-cap">
             <table class="table table-striped table-hover align-middle mb-0">
               <thead class="table-light">
                 <tr>
@@ -1082,7 +1082,7 @@ onMounted(async () => {
             ({{ amNoDept.map((u) => u.full_name).join(", ") }}). Their requests go to every
             program head until a department is set.
           </div>
-          <div class="table-responsive">
+          <div class="table-responsive scroll-cap">
             <table class="table table-striped table-hover align-middle mb-0">
               <thead class="table-light">
                 <tr>

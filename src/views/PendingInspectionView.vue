@@ -256,7 +256,7 @@ async function confirmInspection() {
       tabindex="-1"
       style="background: rgba(0, 0, 0, 0.5);"
     >
-      <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title">Evaluate Returned Item</h5>
@@ -342,7 +342,7 @@ async function confirmInspection() {
       tabindex="-1"
       style="background: rgba(0, 0, 0, 0.5);"
     >
-      <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title">Confirm Inspection</h5>

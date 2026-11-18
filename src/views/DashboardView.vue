@@ -1053,7 +1053,7 @@ eventContent(arg) {
     <div v-if="!isAdmin" class="card p-3 shadow-sm">
       <h6 class="mb-3">Pending Requests</h6>
 
-      <ul class="list-group list-group-flush">
+      <ul class="list-group list-group-flush scroll-cap">
         <li v-if="recentRequestsList.length === 0" class="list-group-item text-center text-muted">
           No pending requests
         </li>

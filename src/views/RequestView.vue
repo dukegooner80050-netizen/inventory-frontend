@@ -1705,7 +1705,7 @@ watch(activeTab, async () => {
         <div class="alert alert-info py-2">
           Reserve uniforms the student has already paid for when they are out of stock. When the AMO restocks, the oldest reservations become requests to the AMO automatically (stock held, ready for pickup) and you get a notification. No need to submit a request yourself.
         </div>
-        <div class="table-responsive">
+        <div class="table-responsive scroll-cap">
           <table class="table table-hover align-middle">
             <thead class="table-light">
               <tr><th>Uniform</th><th>Student</th><th>Gender</th><th>Size</th><th>Qty</th><th>Stock</th><th>Status</th><th>Date</th><th>Action</th></tr>

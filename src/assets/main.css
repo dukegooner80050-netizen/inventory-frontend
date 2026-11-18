@@ -116,3 +116,15 @@ body {
   padding: 16px;
   overflow-y: auto;
 }
+
+/* Long lists and tables: scroll inside the card instead of stretching the page. */
+.scroll-cap {
+  max-height: 60vh;
+  overflow-y: auto;
+}
+.scroll-cap thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--bs-tertiary-bg, var(--bs-body-bg));
+}

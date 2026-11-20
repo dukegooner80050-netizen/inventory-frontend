@@ -340,9 +340,31 @@ function amSortValue(u, key) {
   if (key === "dept") return deptList.value.find((d) => String(d.iddept) === String(u.iddept))?.dept_name || "";
   return "";
 }
+/* Filter popover for Manage Accounts (applied before sorting). */
+const showAmFilter = ref(false);
+const amFilter = reactive({ q: "", role: "", dept: "", status: "" });
+const amFilterCount = computed(
+  () => ["q", "role", "dept", "status"].filter((k) => String(amFilter[k]).trim() !== "").length
+);
+function amClearFilter() {
+  amFilter.q = "";
+  amFilter.role = "";
+  amFilter.dept = "";
+  amFilter.status = "";
+}
+const amFiltered = computed(() => {
+  const q = amFilter.q.trim().toLowerCase();
+  return amUsers.value.filter((u) => {
+    if (q && !`${u.full_name || ""} ${u.username || ""}`.toLowerCase().includes(q)) return false;
+    if (amFilter.role && String(u.role || "").toLowerCase() !== amFilter.role) return false;
+    if (amFilter.dept === "none" ? !!u.iddept : amFilter.dept && String(u.iddept) !== amFilter.dept) return false;
+    if (amFilter.status && amSortValue(u, "status").toLowerCase() !== amFilter.status) return false;
+    return true;
+  });
+});
 const amSorted = computed(() => {
-  if (!amSorts.value.length) return amUsers.value;
-  return [...amUsers.value].sort((a, b) => {
+  if (!amSorts.value.length) return amFiltered.value;
+  return [...amFiltered.value].sort((a, b) => {
     for (const { key, dir } of amSorts.value) {
       const x = amSortValue(a, key);
       const y = amSortValue(b, key);
@@ -1118,6 +1140,50 @@ onMounted(async () => {
             ({{ amNoDept.map((u) => u.full_name).join(", ") }}). Their requests go to every
             program head until a department is set.
           </div>
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <div class="position-relative">
+              <button
+                type="button"
+                class="btn btn-sm"
+                :class="amFilterCount ? 'btn-secondary' : 'btn-outline-secondary'"
+                @click="showAmFilter = !showAmFilter"
+              >
+                <i class="bi bi-funnel me-1"></i>
+                Filter<span v-if="amFilterCount"> ({{ amFilterCount }})</span>
+              </button>
+              <div
+                v-if="showAmFilter"
+                class="card shadow position-absolute start-0 mt-1 p-3"
+                style="z-index: 1050; width: 280px"
+              >
+                <label class="form-label mb-1 small" for="am-q">Name or username</label>
+                <input id="am-q" v-model="amFilter.q" type="text" class="form-control form-control-sm mb-2" placeholder="Search..." />
+                <label class="form-label mb-1 small" for="am-role">Role</label>
+                <select id="am-role" v-model="amFilter.role" class="form-select form-select-sm mb-2">
+                  <option value="">All roles</option>
+                  <option v-for="(label, key) in ROLE_LABELS" :key="key" :value="key">{{ label }}</option>
+                </select>
+                <label class="form-label mb-1 small" for="am-dept">Department</label>
+                <select id="am-dept" v-model="amFilter.dept" class="form-select form-select-sm mb-2">
+                  <option value="">All departments</option>
+                  <option value="none">No department</option>
+                  <option v-for="d in deptList" :key="d.iddept" :value="String(d.iddept)">{{ d.dept_name }}</option>
+                </select>
+                <label class="form-label mb-1 small" for="am-status">Status</label>
+                <select id="am-status" v-model="amFilter.status" class="form-select form-select-sm mb-2">
+                  <option value="">All statuses</option>
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                  <option value="pending">Pending</option>
+                </select>
+                <div class="d-flex gap-2">
+                  <button type="button" class="btn btn-sm btn-outline-secondary" :disabled="!amFilterCount" @click="amClearFilter">Clear</button>
+                  <button type="button" class="btn btn-sm btn-primary ms-auto" @click="showAmFilter = false">Done</button>
+                </div>
+              </div>
+            </div>
+            <span class="text-muted small">Showing {{ amSorted.length }} of {{ amUsers.length }}</span>
+          </div>
           <div class="table-responsive scroll-cap">
             <table class="table table-striped table-hover align-middle mb-0">
               <thead class="table-light">
@@ -1231,9 +1297,9 @@ onMounted(async () => {
                   </td>
                 </tr>
 
-                <tr v-if="amUsers.length === 0">
+                <tr v-if="amSorted.length === 0">
                   <td colspan="6" class="text-center text-muted py-4">
-                    No accounts found.
+                    {{ amUsers.length ? "No accounts match the filter." : "No accounts found." }}
                   </td>
                 </tr>
               </tbody>

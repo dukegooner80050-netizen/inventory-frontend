@@ -41,7 +41,7 @@ async function loadAppealCount() {
 }
 onMounted(loadAppealCount);
 
-/* On the All tab, action buttons sit behind a toggle (keyed by request id); other tabs show them. */
+/* Action buttons sit behind an Actions toggle on every tab (keyed by request id). */
 const actionsOpen = reactive({});
 function toggleActions(id) {
   actionsOpen[id] = !actionsOpen[id];
@@ -510,7 +510,7 @@ function statusBadgeClass(status) {
               <th style="width: 100px">Total Qty</th>
               <th style="width: 120px">Status</th>
               <th style="width: 130px">Date</th>
-              <th :style="{ width: activeTab === 'all' ? '130px' : '250px' }">Actions</th>
+              <th :style="{ width: '130px' }">Actions</th>
             </tr>
           </thead>
 
@@ -555,7 +555,6 @@ function statusBadgeClass(status) {
                 <td>{{ r.request_date || "—" }}</td>
                 <td @click.stop>
                   <button
-                    v-if="activeTab === 'all'"
                     class="btn btn-sm btn-secondary text-white"
                     :aria-expanded="!!actionsOpen[r.id]"
                     @click="toggleActions(r.id)"
@@ -564,8 +563,8 @@ function statusBadgeClass(status) {
                     <span :class="{ rotated: actionsOpen[r.id] }" class="chevron ms-1">▶&#xFE0E;</span>
                   </button>
                   <div
-                    v-if="activeTab !== 'all' || actionsOpen[r.id]"
-                    :class="activeTab === 'all' ? 'd-flex flex-column align-items-stretch gap-1 mt-2 text-nowrap' : 'd-flex gap-1 text-nowrap'"
+                    v-if="actionsOpen[r.id]"
+                    class="d-flex flex-column align-items-stretch gap-1 mt-2 text-nowrap"
                   >
                     <button
                       v-if="(r.status || '').toLowerCase() === 'with coordinator'"

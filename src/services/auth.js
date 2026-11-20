@@ -46,12 +46,13 @@ export async function changePassword({ current_password, password, password_conf
 }
 
 /** LOGOUT */
-export async function logout(){
+// options.idle: true tells the server this sign-out came from the idle timer (it only changes the log line).
+export async function logout(options = {}){
 
     // Leave even if the server can't be reached or the session already
     // ended: the local sign-out must always happen.
     try {
-        await axios.post("/logout");
+        await axios.post("/logout", options.idle ? { idle: true } : {});
     } finally {
         localStorage.removeItem("token");
 

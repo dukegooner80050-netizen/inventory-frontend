@@ -66,7 +66,7 @@ async function endSession() {
     /* the login page just won't show the note */
   }
   try {
-    await logout();
+    await logout({ idle: true });
   } catch {
     /* the local sign-out already happened; still go to the login page */
   }

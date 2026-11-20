@@ -81,7 +81,7 @@ defineExpose({ load });
     <div v-if="loading" class="text-muted py-3">Loading appeals...</div>
 
     <template v-else>
-      <div v-if="!waiting.length" class="text-muted text-center py-4">No appeals are waiting.</div>
+      <div v-if="!waiting.length" class="text-muted text-center py-2">No appeals are waiting.</div>
 
       <div v-for="r in waiting" :key="r.id" class="card shadow-sm mb-3">
         <div class="card-body">
@@ -105,7 +105,7 @@ defineExpose({ load });
         </div>
       </div>
 
-      <h6 v-if="decided.length" class="mt-4">Answered appeals</h6>
+      <h6 v-if="decided.length" class="mt-3">Answered appeals</h6>
       <div v-if="decided.length" class="table-responsive">
         <table class="table table-sm align-middle">
           <thead class="table-light">

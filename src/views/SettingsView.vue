@@ -318,6 +318,40 @@ const amNoDept = computed(() =>
   ),
 );
 const deptList = ref([]);
+/* Click a column header to sort Manage Accounts; click again to reverse. */
+const amSortKey = ref("");
+const amSortDir = ref("asc");
+function amSortBy(key) {
+  if (amSortKey.value === key) {
+    amSortDir.value = amSortDir.value === "asc" ? "desc" : "asc";
+  } else {
+    amSortKey.value = key;
+    amSortDir.value = "asc";
+  }
+}
+function amSortMark(key) {
+  return amSortKey.value === key ? (amSortDir.value === "asc" ? "▲" : "▼") : "";
+}
+function amSortValue(u, key) {
+  if (key === "name") return u.full_name || "";
+  if (key === "username") return u.username || "";
+  if (key === "status") return u.status === "inactive" ? "Inactive" : u.status === "pending" ? "Pending" : "Active";
+  if (key === "role") return ROLE_LABELS[String(u.role || "").toLowerCase()] || u.role || "";
+  if (key === "dept") return deptList.value.find((d) => String(d.iddept) === String(u.iddept))?.dept_name || "";
+  return "";
+}
+const amSorted = computed(() => {
+  const key = amSortKey.value;
+  if (!key) return amUsers.value;
+  const dir = amSortDir.value === "asc" ? 1 : -1;
+  return [...amUsers.value].sort((a, b) => {
+    const x = amSortValue(a, key);
+    const y = amSortValue(b, key);
+    if (!x && y) return 1; // blanks always last
+    if (x && !y) return -1;
+    return dir * x.localeCompare(y, undefined, { sensitivity: "base", numeric: true });
+  });
+});
 const amDeptChoice = reactive({}); // { [idUsers]: iddept | "" }
 async function saveDept(user) {
   try {
@@ -1086,17 +1120,17 @@ onMounted(async () => {
             <table class="table table-striped table-hover align-middle mb-0">
               <thead class="table-light">
                 <tr>
-                  <th>Name</th>
-                  <th>Username</th>
-                  <th style="width: 100px">Status</th>
-                  <th style="width: 170px">Role</th>
-                  <th style="width: 200px">Department</th>
+                  <th class="sortable" @click="amSortBy('name')">Name <span class="sort-mark">{{ amSortMark("name") }}</span></th>
+                  <th class="sortable" @click="amSortBy('username')">Username <span class="sort-mark">{{ amSortMark("username") }}</span></th>
+                  <th class="sortable" style="width: 100px" @click="amSortBy('status')">Status <span class="sort-mark">{{ amSortMark("status") }}</span></th>
+                  <th class="sortable" style="width: 170px" @click="amSortBy('role')">Role <span class="sort-mark">{{ amSortMark("role") }}</span></th>
+                  <th class="sortable" style="width: 200px" @click="amSortBy('dept')">Department <span class="sort-mark">{{ amSortMark("dept") }}</span></th>
                   <th style="width: 150px">Actions</th>
                 </tr>
               </thead>
 
               <tbody>
-                <tr v-for="u in amUsers" :key="u.idUsers" :class="{ 'text-muted': u.status === 'inactive' }">
+                <tr v-for="u in amSorted" :key="u.idUsers" :class="{ 'text-muted': u.status === 'inactive' }">
                   <td>
                     {{ u.full_name }}
                     <span v-if="isSelf(u)" class="badge bg-secondary ms-1">You</span>
@@ -1468,6 +1502,14 @@ onMounted(async () => {
 </template>
 
 <style scoped>
+.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+.sort-mark {
+  font-size: 0.7rem;
+}
+
 .chevron {
   display: inline-block;
   transition: transform 0.15s ease;

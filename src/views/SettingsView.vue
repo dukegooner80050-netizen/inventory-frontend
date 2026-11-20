@@ -318,19 +318,19 @@ const amNoDept = computed(() =>
   ),
 );
 const deptList = ref([]);
-/* Click a column header to sort Manage Accounts; click again to reverse. */
-const amSortKey = ref("");
-const amSortDir = ref("asc");
+/* Click headers to sort Manage Accounts. Each new column is added as the next
+   sort level (e.g. Role, then Department). Click a used column again to reverse it. */
+const amSorts = ref([]); // [{ key, dir }]
 function amSortBy(key) {
-  if (amSortKey.value === key) {
-    amSortDir.value = amSortDir.value === "asc" ? "desc" : "asc";
-  } else {
-    amSortKey.value = key;
-    amSortDir.value = "asc";
-  }
+  const cur = amSorts.value.find((s) => s.key === key);
+  if (cur) cur.dir = cur.dir === "asc" ? "desc" : "asc";
+  else amSorts.value.push({ key, dir: "asc" });
 }
 function amSortMark(key) {
-  return amSortKey.value === key ? (amSortDir.value === "asc" ? "▲" : "▼") : "";
+  const i = amSorts.value.findIndex((s) => s.key === key);
+  if (i < 0) return "";
+  const arrow = amSorts.value[i].dir === "asc" ? "▲" : "▼";
+  return amSorts.value.length > 1 ? arrow + (i + 1) : arrow;
 }
 function amSortValue(u, key) {
   if (key === "name") return u.full_name || "";
@@ -341,15 +341,17 @@ function amSortValue(u, key) {
   return "";
 }
 const amSorted = computed(() => {
-  const key = amSortKey.value;
-  if (!key) return amUsers.value;
-  const dir = amSortDir.value === "asc" ? 1 : -1;
+  if (!amSorts.value.length) return amUsers.value;
   return [...amUsers.value].sort((a, b) => {
-    const x = amSortValue(a, key);
-    const y = amSortValue(b, key);
-    if (!x && y) return 1; // blanks always last
-    if (x && !y) return -1;
-    return dir * x.localeCompare(y, undefined, { sensitivity: "base", numeric: true });
+    for (const { key, dir } of amSorts.value) {
+      const x = amSortValue(a, key);
+      const y = amSortValue(b, key);
+      if (!x && y) return 1; // blanks always last
+      if (x && !y) return -1;
+      const c = x.localeCompare(y, undefined, { sensitivity: "base", numeric: true });
+      if (c) return dir === "asc" ? c : -c;
+    }
+    return 0;
   });
 });
 const amDeptChoice = reactive({}); // { [idUsers]: iddept | "" }
@@ -1125,7 +1127,10 @@ onMounted(async () => {
                   <th class="sortable" style="width: 100px" @click="amSortBy('status')">Status <span class="sort-mark">{{ amSortMark("status") }}</span></th>
                   <th class="sortable" style="width: 170px" @click="amSortBy('role')">Role <span class="sort-mark">{{ amSortMark("role") }}</span></th>
                   <th class="sortable" style="width: 200px" @click="amSortBy('dept')">Department <span class="sort-mark">{{ amSortMark("dept") }}</span></th>
-                  <th style="width: 150px">Actions</th>
+                  <th style="width: 150px">
+                    Actions
+                    <button v-if="amSorts.length" type="button" class="btn btn-link btn-sm p-0 ms-1" @click="amSorts = []">Clear sort</button>
+                  </th>
                 </tr>
               </thead>
 

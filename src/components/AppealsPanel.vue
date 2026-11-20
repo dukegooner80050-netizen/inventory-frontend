@@ -81,51 +81,80 @@ defineExpose({ load });
     <div v-if="loading" class="text-muted py-3">Loading appeals...</div>
 
     <template v-else>
-      <div v-if="!waiting.length" class="text-muted text-center py-2">No appeals are waiting.</div>
-
-      <div v-for="r in waiting" :key="r.id" class="card shadow-sm mb-3">
+      <div class="card shadow-sm mb-4">
         <div class="card-body">
-          <div class="d-flex flex-wrap justify-content-between gap-2">
-            <h6 class="mb-1">Request #{{ r.id }} &mdash; {{ r.requesterName || r.requester }}</h6>
-            <span class="text-muted small">Appealed {{ fmt(r.appealedAt) }}</span>
-          </div>
-          <div class="small text-muted mb-2">{{ lines(r) }}</div>
-          <div class="small"><strong>Purpose:</strong> {{ r.purpose }}</div>
-          <div class="small text-danger">
-            <strong>Rejected{{ r.rejectedByHead ? " by the program head" : "" }}:</strong> {{ r.rejectReason }}
-          </div>
-          <div class="border rounded p-2 mt-2 bg-light">
-            <strong class="small">Requester's appeal:</strong>
-            <div>{{ r.appealMessage }}</div>
-          </div>
-          <div class="mt-3 d-flex flex-wrap gap-2">
-            <button class="btn btn-sm btn-success" @click="open(r, 'reopen')">Accept &amp; reopen</button>
-            <button class="btn btn-sm btn-danger text-white" @click="open(r, 'uphold')">Keep rejected</button>
+          <h6 class="mb-2">Awaiting response</h6>
+          <div class="table-responsive scroll-cap">
+            <table class="table table-striped table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Request</th>
+                  <th>Requester</th>
+                  <th>Items</th>
+                  <th>Rejected because</th>
+                  <th>Appeal</th>
+                  <th>Appealed</th>
+                  <th style="width: 130px">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="r in waiting" :key="r.id">
+                  <td>#{{ r.id }}</td>
+                  <td>{{ r.requesterName || r.requester }}</td>
+                  <td class="small">
+                    {{ lines(r) }}
+                    <div class="text-muted"><strong>Purpose:</strong> {{ r.purpose }}</div>
+                  </td>
+                  <td class="small text-danger">
+                    <span v-if="r.rejectedByHead" class="text-muted d-block">By the program head</span>
+                    {{ r.rejectReason }}
+                  </td>
+                  <td class="small">{{ r.appealMessage }}</td>
+                  <td class="small text-nowrap">{{ fmt(r.appealedAt) }}</td>
+                  <td>
+                    <div class="d-flex flex-column gap-1 text-nowrap">
+                      <button class="btn btn-sm btn-success" @click="open(r, 'reopen')">Accept &amp; reopen</button>
+                      <button class="btn btn-sm btn-danger text-white" @click="open(r, 'uphold')">Keep rejected</button>
+                    </div>
+                  </td>
+                </tr>
+                <tr v-if="!waiting.length">
+                  <td colspan="7" class="text-center text-muted py-4">No appeals are waiting.</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
 
-      <h6 v-if="decided.length" class="mt-3">Answered appeals</h6>
-      <div v-if="decided.length" class="table-responsive">
-        <table class="table table-sm align-middle">
-          <thead class="table-light">
-            <tr><th>Request</th><th>Requester</th><th>Appeal</th><th>Answer</th><th>Reply</th></tr>
-          </thead>
-          <tbody>
-            <tr v-for="r in decided" :key="'d' + r.id">
-              <td>#{{ r.id }}</td>
-              <td>{{ r.requesterName || r.requester }}</td>
-              <td class="small">{{ r.appealMessage }}</td>
-              <td>
-                <span class="badge" :class="r.appealDecision === 'Reopened' ? 'bg-success' : 'bg-secondary'">
-                  {{ r.appealDecision === "Reopened" ? "Accepted" : "Kept rejected" }}
-                </span>
-                <div class="small text-muted">{{ r.appealDecidedBy }} &middot; {{ fmt(r.appealDecidedAt) }}</div>
-              </td>
-              <td class="small">{{ r.appealReply }}</td>
-            </tr>
-          </tbody>
-        </table>
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h6 class="mb-2">Answered appeals</h6>
+          <div class="table-responsive scroll-cap">
+            <table class="table table-striped table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr><th>Request</th><th>Requester</th><th>Appeal</th><th>Answer</th><th>Reply</th></tr>
+              </thead>
+              <tbody>
+                <tr v-for="r in decided" :key="'d' + r.id">
+                  <td>#{{ r.id }}</td>
+                  <td>{{ r.requesterName || r.requester }}</td>
+                  <td class="small">{{ r.appealMessage }}</td>
+                  <td>
+                    <span class="badge" :class="r.appealDecision === 'Reopened' ? 'bg-success' : 'bg-secondary'">
+                      {{ r.appealDecision === "Reopened" ? "Accepted" : "Kept rejected" }}
+                    </span>
+                    <div class="small text-muted">{{ r.appealDecidedBy }} &middot; {{ fmt(r.appealDecidedAt) }}</div>
+                  </td>
+                  <td class="small">{{ r.appealReply }}</td>
+                </tr>
+                <tr v-if="!decided.length">
+                  <td colspan="5" class="text-center text-muted py-4">No answered appeals yet.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </template>
 
